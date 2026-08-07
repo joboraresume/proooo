@@ -117,3 +117,46 @@
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
   box-shadow: 0 0 0 1000px #ffffff inset !important;
 }
+/* ============================= */
+/* REGISTER ERROR / SUCCESS BOXES */
+/* ============================= */
+
+.error-message {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 10px 14px;
+  margin: 12px 0 16px;
+
+  border-radius: 8px;
+
+  background-color: #ffe8e8;
+  color: #c62828;
+
+  border: 1px solid #f1aaaa;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-align: center;
+}
+
+.success-message {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 10px 14px;
+  margin: 12px 0 16px;
+
+  border-radius: 8px;
+
+  background-color: #e8f7ed;
+  color: #218838;
+
+  border: 1px solid #a8d8b5;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-align: center;
+}

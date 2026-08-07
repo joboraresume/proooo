@@ -2,9 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Register.css";
 
-
 function Register() {
-
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -14,53 +12,58 @@ function Register() {
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [otp, setOtp] = useState("");
 
   const [loading, setLoading] = useState(false);
 
+  // Message states
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const clearMessages = () => {
+    setError("");
+    setSuccess("");
+  };
 
   const sendOTP = async (e) => {
-
     e.preventDefault();
 
+    clearMessages();
 
+    // Name validation
     if (!name.trim()) {
-      alert("Please enter your name.");
+      setError("Please enter your name.");
       return;
     }
 
-
+    // Phone validation
     if (!/^\d{10}$/.test(phone)) {
-      alert("Please enter a valid 10-digit phone number.");
+      setError("Please enter a valid 10-digit phone number.");
       return;
     }
 
-
+    // Email validation
     if (!email.includes("@")) {
-      alert("Please enter a valid email address.");
+      setError("Please enter a valid email address.");
       return;
     }
 
-
+    // Password validation
     if (password.length < 6) {
-      alert("Password must contain at least 6 characters.");
+      setError("Password must contain at least 6 characters.");
       return;
     }
 
-
+    // Confirm password validation
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
-
 
     try {
-
       setLoading(true);
-
 
       const response = await fetch(
         "http://localhost:5000/api/auth/register/send-otp",
@@ -68,76 +71,58 @@ function Register() {
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
 
           body: JSON.stringify({
             name,
             phone,
             email,
-            password
-          })
+            password,
+          }),
         }
       );
 
-
       const data = await response.json();
 
-
+      // Backend error
       if (!response.ok) {
-
-        alert(
-          data.detail ||
-          "Unable to send OTP."
+        setError(
+          data.detail || "Unable to send OTP."
         );
-
         return;
       }
 
-
-      alert(
-        "OTP has been sent to your email."
-      );
+      // OTP sent successfully
+      setSuccess("OTP has been sent to your email.");
 
       setStep(2);
 
-
     } catch (error) {
-
       console.error(error);
 
-      alert(
+      setError(
         "Cannot connect to the server."
       );
 
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
-
   const verifyOTP = async (e) => {
-
     e.preventDefault();
 
+    clearMessages();
 
+    // OTP validation
     if (otp.length !== 6) {
-
-      alert(
-        "Please enter the 6-digit OTP."
-      );
-
+      setError("Please enter the 6-digit OTP.");
       return;
     }
 
-
     try {
-
       setLoading(true);
-
 
       const response = await fetch(
         "http://localhost:5000/api/auth/register/verify-otp",
@@ -145,58 +130,49 @@ function Register() {
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
 
           body: JSON.stringify({
             email,
-            otp
-          })
+            otp,
+          }),
         }
       );
 
-
       const data = await response.json();
 
-
+      // Incorrect OTP / backend error
       if (!response.ok) {
-
-        alert(
-          data.detail ||
-          "Incorrect OTP."
+        setError(
+          data.detail || "Incorrect OTP."
         );
-
         return;
       }
 
-
-      alert(
+      // Account created successfully
+      setSuccess(
         "Account created successfully!"
       );
 
-
-      navigate("/login");
-
+      // Give user time to see success message
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
 
     } catch (error) {
-
       console.error(error);
 
-      alert(
+      setError(
         "Cannot connect to the server."
       );
 
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
-
   return (
-
     <div className="register-page">
 
       <div className="register-card">
@@ -209,7 +185,21 @@ function Register() {
           Create your AgriSense X Pro account
         </p>
 
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div className="error-message">
+            ❌ {error}
+          </div>
+        )}
 
+        {/* SUCCESS MESSAGE */}
+        {success && (
+          <div className="success-message">
+            ✅ {success}
+          </div>
+        )}
+
+        {/* STEP 1 - REGISTRATION */}
         {step === 1 && (
 
           <form onSubmit={sendOTP}>
@@ -222,11 +212,11 @@ function Register() {
               type="text"
               placeholder="Enter your full name"
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
+              onChange={(e) => {
+                setName(e.target.value);
+                clearMessages();
+              }}
             />
-
 
             <label>
               Phone Number
@@ -237,13 +227,13 @@ function Register() {
               placeholder="10-digit phone number"
               maxLength="10"
               value={phone}
-              onChange={(e) =>
+              onChange={(e) => {
                 setPhone(
                   e.target.value.replace(/\D/g, "")
-                )
-              }
+                );
+                clearMessages();
+              }}
             />
-
 
             <label>
               Email Address
@@ -253,11 +243,11 @@ function Register() {
               type="email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearMessages();
+              }}
             />
-
 
             <label>
               Password
@@ -267,11 +257,11 @@ function Register() {
               type="password"
               placeholder="Create password"
               value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearMessages();
+              }}
             />
-
 
             <label>
               Confirm Password
@@ -281,40 +271,32 @@ function Register() {
               type="password"
               placeholder="Confirm password"
               value={confirmPassword}
-              onChange={(e) =>
-                setConfirmPassword(
-                  e.target.value
-                )
-              }
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                clearMessages();
+              }}
             />
-
 
             <button
               type="submit"
               disabled={loading}
             >
-
               {loading
                 ? "Sending OTP..."
                 : "Create Account"}
-
             </button>
-
 
             <button
               type="button"
-              onClick={() =>
-                navigate("/login")
-              }
+              onClick={() => navigate("/login")}
             >
               Already have an account? Login
             </button>
 
           </form>
-
         )}
 
-
+        {/* STEP 2 - OTP VERIFICATION */}
         {step === 2 && (
 
           <form onSubmit={verifyOTP}>
@@ -331,7 +313,6 @@ function Register() {
               {email}
             </strong>
 
-
             <label>
               Enter OTP
             </label>
@@ -341,49 +322,40 @@ function Register() {
               maxLength="6"
               placeholder="Enter OTP"
               value={otp}
-              onChange={(e) =>
+              onChange={(e) => {
                 setOtp(
-                  e.target.value.replace(
-                    /\D/g,
-                    ""
-                  )
-                )
-              }
+                  e.target.value.replace(/\D/g, "")
+                );
+                clearMessages();
+              }}
             />
-
 
             <button
               type="submit"
               disabled={loading}
             >
-
               {loading
                 ? "Verifying..."
                 : "Verify OTP & Create Account"}
-
             </button>
-
 
             <button
               type="button"
-              onClick={() =>
-                setStep(1)
-              }
+              onClick={() => {
+                setStep(1);
+                clearMessages();
+              }}
             >
               Back
             </button>
 
           </form>
-
         )}
 
       </div>
 
     </div>
-
   );
-
 }
-
 
 export default Register;
