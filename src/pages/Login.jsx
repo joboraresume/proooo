@@ -2,135 +2,114 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
+
 function Login() {
 
   const navigate = useNavigate();
 
-  const [loginMethod, setLoginMethod] = useState("email");
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] =
+    useState("");
 
-  const [password, setPassword] = useState("");
+  const [password, setPassword] =
+    useState("");
 
-  const [phone, setPhone] = useState("");
-
-  const [otp, setOtp] = useState("");
-
-  const [showForgotPassword, setShowForgotPassword] =
+  const [loading, setLoading] =
     useState(false);
 
-  const [resetEmail, setResetEmail] = useState("");
 
-
-  /* Email Login */
-
-  const handleEmailLogin = (e) => {
+  const handleLogin = async (e) => {
 
     e.preventDefault();
 
 
-    if (email === "") {
-
-      alert("Please enter your email");
-
-      return;
-    }
-
-
-    if (!email.includes("@")) {
-
-      alert("Please enter a valid email");
-
-      return;
-    }
-
-
-    if (password === "") {
-
-      alert("Please enter your password");
-
-      return;
-    }
-
-
-    if (password.length < 6) {
+    if (!identifier.trim()) {
 
       alert(
-        "Password must contain at least 6 characters"
+        "Please enter your email or phone number."
       );
 
       return;
     }
 
 
-    alert("Login successful!");
-
-    navigate("/dashboard");
-
-  };
-
-
-  /* Send OTP */
-
-  const handleSendOTP = () => {
-
-    if (phone.length !== 10) {
+    if (!password) {
 
       alert(
-        "Please enter a valid 10-digit phone number"
+        "Please enter your password."
       );
 
       return;
     }
 
 
-    alert("OTP sent successfully!");
+    try {
 
-  };
-
-
-  /* Verify OTP */
-
-  const handleVerifyOTP = (e) => {
-
-    e.preventDefault();
+      setLoading(true);
 
 
-    if (otp.length !== 6) {
+      const response = await fetch(
+        "http://localhost:5000/api/auth/login",
+        {
 
-      alert("OTP must contain 6 digits");
+          method: "POST",
 
-      return;
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            identifier,
+
+            password
+
+          })
+
+        }
+      );
+
+
+      const data =
+        await response.json();
+
+
+      if (!response.ok) {
+
+        alert(
+          data.detail ||
+          "Login failed."
+        );
+
+        return;
+      }
+
+
+      localStorage.setItem(
+        "agrisenseUser",
+        JSON.stringify(
+          data.user
+        )
+      );
+
+
+      navigate("/dashboard");
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Unable to connect to the server."
+      );
+
+    } finally {
+
+      setLoading(false);
+
     }
-
-
-    alert("OTP Login successful!");
-
-    navigate("/dashboard");
-
-  };
-
-
-  /* Forgot Password */
-
-  const handleForgotPassword = (e) => {
-
-    e.preventDefault();
-
-
-    if (!resetEmail.includes("@")) {
-
-      alert("Please enter a valid email");
-
-      return;
-    }
-
-
-    alert(
-      "Password reset link sent to your email"
-    );
-
-    setShowForgotPassword(false);
 
   };
 
@@ -141,328 +120,97 @@ function Login() {
 
       <div className="login-card">
 
-
-        <h1>Login</h1>
-
+        <h1>
+          Login
+        </h1>
 
         <p className="login-subtitle">
-
-          Enter your credentials to access your account
-
+          Login using your registered
+          email or phone number
         </p>
 
 
-        {/* Login Tabs */}
+        <form onSubmit={handleLogin}>
 
-        <div className="login-tabs">
+          <label>
+            Email or Phone Number
+          </label>
+
+          <input
+            type="text"
+            placeholder="Email or 10-digit phone number"
+            value={identifier}
+            onChange={(e) =>
+              setIdentifier(
+                e.target.value
+              )
+            }
+          />
+
+
+          <div className="password-label">
+
+            <label>
+              Password
+            </label>
+
+            <button
+              type="button"
+              className="forgot-password"
+              onClick={() =>
+                navigate(
+                  "/forgot-password"
+                )
+              }
+            >
+              Forgot Password?
+            </button>
+
+          </div>
+
+
+          <input
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) =>
+              setPassword(
+                e.target.value
+              )
+            }
+          />
 
 
           <button
-
-            className={
-              loginMethod === "email"
-                ? "active-tab"
-                : ""
-            }
-
-            onClick={() =>
-              setLoginMethod("email")
-            }
-
+            type="submit"
+            className="login-button"
+            disabled={loading}
           >
 
-            Email / Password
+            {loading
+              ? "Logging in..."
+              : "Login"}
 
           </button>
 
+        </form>
+
+
+        <p className="register-text">
+
+          Don't have an account?
 
           <button
-
-            className={
-              loginMethod === "otp"
-                ? "active-tab"
-                : ""
-            }
-
+            type="button"
+            className="register-link"
             onClick={() =>
-              setLoginMethod("otp")
+              navigate("/register")
             }
-
           >
-
-            Login with OTP
-
+            Register
           </button>
 
-
-        </div>
-
-
-        {/* Email Login */}
-
-        {loginMethod === "email" &&
-          !showForgotPassword && (
-
-            <form
-              onSubmit={handleEmailLogin}
-            >
-
-
-              <label>Email</label>
-
-
-              <input
-
-                type="email"
-
-                placeholder="Enter your email"
-
-                value={email}
-
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
-
-              />
-
-
-              <div className="password-label">
-
-
-                <label>Password</label>
-
-
-                <button
-
-                  type="button"
-
-                  className="forgot-password"
-
-                  onClick={() =>
-                    setShowForgotPassword(true)
-                  }
-
-                >
-
-                  Forgot Password?
-
-                </button>
-
-
-              </div>
-
-
-              <input
-
-                type="password"
-
-                placeholder="Enter your password"
-
-                value={password}
-
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
-
-              />
-
-
-              <button
-
-                type="submit"
-
-                className="login-button"
-
-              >
-
-                Login
-
-              </button>
-
-
-            </form>
-
-          )}
-
-
-        {/* OTP Login */}
-
-        {loginMethod === "otp" && (
-
-          <form
-            onSubmit={handleVerifyOTP}
-          >
-
-
-            <label>Phone Number</label>
-
-
-            <input
-
-              type="tel"
-
-              placeholder="Enter 10-digit phone number"
-
-              value={phone}
-
-              onChange={(e) =>
-                setPhone(e.target.value)
-              }
-
-            />
-
-
-            <button
-
-              type="button"
-
-              className="otp-button"
-
-              onClick={handleSendOTP}
-
-            >
-
-              Send OTP
-
-            </button>
-
-
-            <label>Enter OTP</label>
-
-
-            <input
-
-              type="text"
-
-              placeholder="Enter 6-digit OTP"
-
-              value={otp}
-
-              onChange={(e) =>
-                setOtp(e.target.value)
-              }
-
-            />
-
-
-            <button
-
-              type="submit"
-
-              className="login-button"
-
-            >
-
-              Verify OTP
-
-            </button>
-
-
-          </form>
-
-        )}
-
-
-        {/* Forgot Password */}
-
-        {showForgotPassword && (
-
-          <form
-            onSubmit={handleForgotPassword}
-          >
-
-
-            <h2>Forgot Password?</h2>
-
-
-            <p>
-
-              Enter your email to reset your password.
-
-            </p>
-
-
-            <label>Email</label>
-
-
-            <input
-
-              type="email"
-
-              placeholder="Enter your email"
-
-              value={resetEmail}
-
-              onChange={(e) =>
-                setResetEmail(e.target.value)
-              }
-
-            />
-
-
-            <button
-
-              type="submit"
-
-              className="login-button"
-
-            >
-
-              Send Reset Link
-
-            </button>
-
-
-            <button
-
-              type="button"
-
-              className="back-button"
-
-              onClick={() =>
-                setShowForgotPassword(false)
-              }
-
-            >
-
-              Back to Login
-
-            </button>
-
-
-          </form>
-
-        )}
-
-
-        {/* Register */}
-
-        {!showForgotPassword && (
-
-          <p className="register-text">
-
-            Don't have an account?
-
-
-            <button
-
-              className="register-link"
-
-              onClick={() =>
-                navigate("/register")
-              }
-
-            >
-
-              Register
-
-            </button>
-
-
-          </p>
-
-        )}
-
+        </p>
 
       </div>
 
@@ -471,5 +219,6 @@ function Login() {
   );
 
 }
+
 
 export default Login;

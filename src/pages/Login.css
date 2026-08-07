@@ -144,3 +144,36 @@
   cursor: pointer;
   margin-left: 8px;
 }
+.login-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 18px;
+
+  background-color: #ffffff !important;
+  color: #000000 !important;
+
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+}
+
+.login-card input::placeholder {
+  color: #777777;
+  opacity: 1;
+}
+
+.login-card input:focus {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #159447;
+  outline: none;
+}
+
+.login-card input:-webkit-autofill,
+.login-card input:-webkit-autofill:hover,
+.login-card input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000000 !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+}

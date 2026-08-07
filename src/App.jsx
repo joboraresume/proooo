@@ -4,18 +4,12 @@ import {
   Route
 } from "react-router-dom";
 
-
-import LandingPage
-  from "./pages/LandingPage";
-
-import Login
-  from "./pages/Login";
-
-import Dashboard
-  from "./pages/Dashboard";
-
-import LandRegistration
-  from "./pages/LandRegistration";
+import LandingPage from "./pages/LandingPage";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import Dashboard from "./pages/Dashboard";
+import LandRegistration from "./pages/LandRegistration";
 
 
 function App() {
@@ -26,65 +20,41 @@ function App() {
 
       <Routes>
 
-
-        {/* LANDING PAGE */}
-
         <Route
-
           path="/"
-
-          element={
-            <LandingPage />
-          }
-
+          element={<LandingPage />}
         />
 
-
-        {/* LOGIN */}
-
         <Route
-
           path="/login"
-
-          element={
-            <Login />
-          }
-
+          element={<Login />}
         />
 
-
-        {/* DASHBOARD */}
+        <Route
+          path="/register"
+          element={<Register />}
+        />
 
         <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
 
+        <Route
           path="/dashboard"
-
-          element={
-            <Dashboard />
-          }
-
+          element={<Dashboard />}
         />
-
-
-        {/* LAND REGISTRATION */}
 
         <Route
-
           path="/land-registration"
-
-          element={
-            <LandRegistration />
-          }
-
+          element={<LandRegistration />}
         />
-
 
       </Routes>
 
     </BrowserRouter>
 
   );
-
 }
 
 
