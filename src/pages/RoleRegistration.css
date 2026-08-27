@@ -1,0 +1,234 @@
+.registration-page {
+
+  min-height: 100vh;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  padding: 40px 20px;
+
+  background: #f4f8f3;
+}
+
+
+.registration-card {
+
+  width: 620px;
+
+  max-width: 100%;
+
+  background: white;
+
+  padding: 40px;
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.10);
+
+}
+
+.registration-card.large-card {
+  width: 950px;
+}
+
+
+.registration-back {
+
+  border: none;
+
+  background: transparent;
+
+  color: #168b3b;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  margin-bottom: 20px;
+
+}
+
+
+.registration-card h1 {
+
+  text-align: center;
+
+  color: #173b24;
+
+  margin: 0;
+
+  font-size: 30px;
+
+}
+
+
+.registration-subtitle {
+
+  text-align: center;
+
+  color: #666;
+
+  margin-top: 8px;
+
+  margin-bottom: 30px;
+
+}
+
+
+.registration-form {
+
+  display: flex;
+
+  flex-direction: column;
+
+}
+
+.map-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.map-layout .form-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-layout .map-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-wrapper-box {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  margin-top: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #d1d5d1;
+}
+
+
+.registration-form label {
+
+  margin-top: 15px;
+
+  margin-bottom: 7px;
+
+  color: #333;
+
+  font-weight: 600;
+
+}
+
+
+.registration-form input,
+.registration-form select,
+.registration-form textarea {
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+
+  border: 1px solid #d1d5d1;
+
+  border-radius: 9px;
+
+  background: white;
+
+  color: #222;
+
+  font-size: 15px;
+
+  outline: none;
+
+}
+
+
+.registration-form textarea {
+
+  min-height: 90px;
+
+  resize: vertical;
+
+}
+
+
+.registration-form input:focus,
+.registration-form select:focus,
+.registration-form textarea:focus {
+
+  border-color: #168b3b;
+
+  box-shadow:
+    0 0 0 2px rgba(22, 139, 59, 0.08);
+
+}
+
+
+.registration-submit {
+
+  width: 100%;
+
+  margin-top: 28px;
+
+  padding: 14px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: #168b3b;
+
+  color: white;
+
+  font-size: 16px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+
+}
+
+
+.registration-submit:hover {
+
+  background: #0f6f2e;
+
+  transform: translateY(-1px);
+
+}
+
+
+@media (max-width: 600px) {
+
+  .registration-card {
+
+    padding: 25px 20px;
+
+  }
+
+
+  .registration-card h1 {
+
+    font-size: 25px;
+
+  }
+
+  .map-layout {
+    flex-direction: column;
+  }
+
+}

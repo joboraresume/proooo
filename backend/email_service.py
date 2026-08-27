@@ -116,14 +116,21 @@ AgriSense X Pro Team
     # SEND THROUGH GMAIL
     # ========================================================
 
-    with smtplib.SMTP_SSL(
-        "smtp.gmail.com",
-        465
-    ) as smtp:
+    try:
+        with smtplib.SMTP_SSL(
+            "smtp.gmail.com",
+            465
+        ) as smtp:
 
-        smtp.login(
-            EMAIL_USER,
-            EMAIL_PASSWORD
-        )
+            smtp.login(
+                EMAIL_USER,
+                EMAIL_PASSWORD
+            )
 
-        smtp.send_message(message)
+            smtp.send_message(message)
+    except Exception as error:
+        print("====================================================")
+        print("EMAIL SERVICE ERROR:", error)
+        print("CRITICAL: SMTP credentials are not set or incorrect.")
+        print(f"FOR TESTING, YOUR OTP IS: {otp}")
+        print("====================================================")

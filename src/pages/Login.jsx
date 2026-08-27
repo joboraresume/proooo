@@ -71,7 +71,7 @@ function Login() {
 
       // Small delay so user can see success message
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/role-selection");
       }, 500);
 
     } catch (error) {

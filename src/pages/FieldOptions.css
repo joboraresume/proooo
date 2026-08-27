@@ -1,0 +1,124 @@
+.field-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background: #f5faf5;
+}
+
+.field-card {
+  width: 700px;
+  max-width: 100%;
+  background: white;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+}
+
+.field-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.field-header h1 {
+  color: #146b2e;
+  margin: 0 0 8px;
+  font-size: 32px;
+}
+
+.field-header p {
+  color: #666;
+  margin: 0;
+}
+
+.field-back {
+  display: block;
+  margin-bottom: 25px;
+  border: none;
+  background: transparent;
+  color: #168b3b;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.field-card h2 {
+  color: #173b24;
+  margin-bottom: 20px;
+}
+
+.field-options {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px;
+  border: 1px solid #dfe8df;
+  border-radius: 16px;
+  background: white;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.2s ease;
+}
+
+.field-option:hover {
+  transform: translateY(-3px);
+  border-color: #239447;
+  box-shadow: 0 8px 20px rgba(35, 148, 71, 0.15);
+}
+
+.field-option-icon {
+  width: 65px;
+  height: 65px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eef8ee;
+  border-radius: 15px;
+  font-size: 34px;
+}
+
+.field-option h3 {
+  margin: 0 0 6px;
+  color: #222;
+  font-size: 20px;
+}
+
+.field-option p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.field-option span {
+  margin-left: auto;
+  font-size: 25px;
+  color: #168b3b;
+}
+
+@media (max-width: 600px) {
+
+  .field-card {
+    padding: 25px 18px;
+  }
+
+  .field-option {
+    padding: 17px;
+  }
+
+  .field-option-icon {
+    width: 55px;
+    height: 55px;
+  }
+
+}

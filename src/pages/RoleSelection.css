@@ -1,0 +1,160 @@
+.role-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background: #f5faf5;
+  box-sizing: border-box;
+}
+
+.role-card {
+  width: 850px;
+  max-width: 100%;
+  background: white;
+  border-radius: 25px;
+  padding: 45px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.role-card h1 {
+  text-align: center;
+  color: #146b2e;
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.role-subtitle {
+  text-align: center;
+  color: #555;
+  font-size: 18px;
+  margin-bottom: 35px;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.role-option {
+  min-height: 140px;
+  padding: 20px;
+  border: 1px solid #dfe8df;
+  border-radius: 18px;
+  background: white;
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  cursor: pointer;
+  text-align: left;
+
+  transition: 0.2s ease;
+
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+.role-option:hover {
+  transform: translateY(-3px);
+  border-color: #239447;
+  box-shadow: 0 8px 20px rgba(35, 148, 71, 0.15);
+}
+
+.role-icon {
+  width: 65px;
+  height: 65px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 38px;
+
+  background: #eef8ee;
+  border-radius: 15px;
+
+  flex-shrink: 0;
+}
+
+.role-option h2 {
+  margin: 0 0 7px;
+  color: #222;
+  font-size: 20px;
+}
+
+.role-option p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Terrace Farming occupies full width */
+.role-option:last-child {
+  grid-column: 1 / -1;
+}
+@media (max-width: 650px) {
+
+  .role-card {
+    padding: 25px 18px;
+  }
+
+  .role-card h1 {
+    font-size: 26px;
+  }
+
+  .role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .role-option:last-child {
+    grid-column: auto;
+  }
+
+}
+
+/* Status Badge and Delete Button */
+.registered-badge {
+  background-color: #e6f9ed;
+  color: #146b2e;
+  border: 1px solid #a3e0b8;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-option.registered {
+  border-color: #a3e0b8;
+  background-color: #fcfdfc;
+  cursor: default;
+}
+
+.role-option.registered:hover {
+  transform: none;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+.role-delete-btn {
+  margin-top: 10px;
+  background-color: #fff0f0;
+  color: #d32f2f;
+  border: 1px solid #ffcdd2;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-delete-btn:hover {
+  background-color: #d32f2f;
+  color: white;
+  border-color: #d32f2f;
+}

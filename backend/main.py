@@ -20,7 +20,13 @@ from pydantic import (
 
 from database import (
     SessionLocal,
-    User
+    User,
+    FarmerProfile,
+    LandownerProfile,
+    ForeignerProfile,
+    WorkerProfile,
+    AgricultureOfficerProfile,
+    TerraceProfile
 )
 
 from database import Base, engine
@@ -54,7 +60,9 @@ app.add_middleware(
     CORSMiddleware,
 
     allow_origins=[
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175"
     ],
 
     allow_credentials=True,
@@ -142,6 +150,165 @@ class ResetPasswordRequest(BaseModel):
     email: EmailStr
 
     new_password: str
+
+# ============================================================
+# FARMER PROFILE REQUEST
+# ============================================================
+
+class FarmerProfileRequest(BaseModel):
+
+    user_id: int
+
+    full_name: str
+
+    phone: str
+
+    email: str | None = None
+
+    address: str | None = None
+
+    experience: int | None = None
+
+    farming_type: str | None = None
+
+
+
+    irrigation_method: str | None = None
+
+    farming_location: str | None = None
+
+
+    # ============================================================
+# LANDOWNER PROFILE REQUEST
+# ============================================================
+
+class LandownerProfileRequest(BaseModel):
+
+    user_id: int
+
+    full_name: str
+
+    phone: str
+
+    email: str | None = None
+
+    address: str | None = None
+
+    land_name: str
+
+    survey_number: str
+
+    district: str
+
+    village: str
+
+    area: float
+
+    water_source: str | None = None
+
+    # ============================================================
+# FOREIGNER PROFILE REQUEST
+# ============================================================
+
+class ForeignerProfileRequest(BaseModel):
+
+    user_id: int
+
+    full_name: str
+
+    nationality: str
+
+    passport_number: str
+
+    phone: str | None = None
+
+    email: str | None = None
+
+    address: str | None = None
+
+    purpose: str | None = None
+
+    land_location: str | None = None
+
+    land_name: str | None = None
+
+    survey_number: str | None = None
+
+    district: str | None = None
+
+    village: str | None = None
+
+    area: float | None = None
+
+    water_source: str | None = None
+
+    # ============================================================
+# WORKER PROFILE REQUEST
+# ============================================================
+
+class WorkerProfileRequest(BaseModel):
+
+    user_id: int
+
+    full_name: str
+
+    phone: str
+
+    email: str | None = None
+
+    address: str | None = None
+
+    work_type: str
+
+    experience: int | None = None
+
+    preferred_location: str | None = None
+
+    # ============================================================
+# AGRICULTURE OFFICER PROFILE REQUEST
+# ============================================================
+
+class AgricultureOfficerProfileRequest(BaseModel):
+
+    user_id: int
+
+    full_name: str
+
+    employee_id: str
+
+    department: str
+
+    designation: str | None = None
+
+    phone: str
+
+    email: str | None = None
+
+    district: str
+
+    office_address: str | None = None
+
+    # ============================================================
+# TERRACE FARMING PROFILE REQUEST
+# ============================================================
+
+class TerraceProfileRequest(BaseModel):
+
+    user_id: int
+
+    terrace_type: str
+
+    name: str
+
+    location: str
+
+    area: float
+
+    crop: str
+
+    number_of_plants: int | None = None
+
+    water_source: str | None = None
 
 
 # ============================================================
@@ -749,4 +916,832 @@ def reset_password(
         "message":
         "Password changed successfully."
 
+    }
+# ============================================================
+# GET USER ROLE STATUS
+# ============================================================
+
+@app.get("/api/profiles/{user_id}")
+def get_user_profiles(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    farmer = (
+        db.query(FarmerProfile)
+        .filter(
+            FarmerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    landowner = (
+        db.query(LandownerProfile)
+        .filter(
+            LandownerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    foreigner = (
+        db.query(ForeignerProfile)
+        .filter(
+            ForeignerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    worker = (
+        db.query(WorkerProfile)
+        .filter(
+            WorkerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    agriculture_officer = (
+        db.query(AgricultureOfficerProfile)
+        .filter(
+            AgricultureOfficerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    terrace = (
+        db.query(TerraceProfile)
+        .filter(
+            TerraceProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    return {
+
+        "farmer": farmer is not None,
+
+        "landowner": landowner is not None,
+
+        "foreigner": foreigner is not None,
+
+        "worker": worker is not None,
+
+        "agriculture_officer":
+            agriculture_officer is not None,
+
+        "terrace":
+            terrace is not None
+    }
+# ============================================================
+# CREATE FARMER PROFILE
+# ============================================================
+
+@app.post("/api/profiles/farmer")
+def create_farmer_profile(
+    request: FarmerProfileRequest,
+    db: Session = Depends(get_db)
+):
+
+    # --------------------------------------------------------
+    # CHECK WHETHER USER EXISTS
+    # --------------------------------------------------------
+
+    user = (
+        db.query(User)
+        .filter(
+            User.id == request.user_id
+        )
+        .first()
+    )
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    # --------------------------------------------------------
+    # CHECK WHETHER FARMER PROFILE ALREADY EXISTS
+    # --------------------------------------------------------
+
+    existing = (
+        db.query(FarmerProfile)
+        .filter(
+            FarmerProfile.user_id ==
+            request.user_id
+        )
+        .first()
+    )
+
+    if existing:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Farmer profile already exists."
+        )
+
+    # --------------------------------------------------------
+    # CREATE FARMER PROFILE
+    # --------------------------------------------------------
+
+    profile = FarmerProfile(
+
+        user_id=request.user_id,
+
+        full_name=request.full_name,
+
+        phone=request.phone,
+
+        email=request.email,
+
+        address=request.address,
+
+        experience=request.experience,
+
+        farming_type=request.farming_type,
+
+
+
+        irrigation_method=
+            request.irrigation_method,
+
+        farming_location=
+            request.farming_location
+    )
+
+    # --------------------------------------------------------
+    # SAVE TO DATABASE
+    # --------------------------------------------------------
+
+    db.add(profile)
+
+    db.commit()
+
+    db.refresh(profile)
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Farmer registration completed.",
+
+        "role":
+            "farmer"
+    }
+# ============================================================
+# DELETE FARMER PROFILE
+# ============================================================
+
+@app.delete("/api/profiles/farmer/{user_id}")
+def delete_farmer_profile(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    # --------------------------------------------------------
+    # FIND FARMER PROFILE
+    # --------------------------------------------------------
+
+    profile = (
+        db.query(FarmerProfile)
+        .filter(
+            FarmerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    # --------------------------------------------------------
+    # IF NOT FOUND
+    # --------------------------------------------------------
+
+    if not profile:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Farmer profile not found."
+        )
+
+    # --------------------------------------------------------
+    # DELETE PROFILE
+    # --------------------------------------------------------
+
+    db.delete(profile)
+
+    db.commit()
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Farmer profile deleted."
+    }
+# ============================================================
+# CREATE LANDOWNER PROFILE
+# ============================================================
+
+@app.post("/api/profiles/landowner")
+def create_landowner_profile(
+    request: LandownerProfileRequest,
+    db: Session = Depends(get_db)
+):
+
+    user = (
+        db.query(User)
+        .filter(
+            User.id == request.user_id
+        )
+        .first()
+    )
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    existing = (
+        db.query(LandownerProfile)
+        .filter(
+            LandownerProfile.user_id ==
+            request.user_id
+        )
+        .first()
+    )
+
+    if existing:
+
+        raise HTTPException(
+            status_code=400,
+            detail=
+            "Landowner profile already exists."
+        )
+
+    profile = LandownerProfile(
+
+        user_id=request.user_id,
+
+        full_name=request.full_name,
+
+        phone=request.phone,
+
+        email=request.email,
+
+        address=request.address,
+
+        land_name=request.land_name,
+
+        survey_number=request.survey_number,
+
+        district=request.district,
+
+        village=request.village,
+
+        area=request.area,
+
+        water_source=request.water_source
+    )
+
+    db.add(profile)
+
+    db.commit()
+
+    db.refresh(profile)
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Landowner registration completed.",
+
+        "role":
+            "landowner"
+    }
+
+# ============================================================
+# DELETE LANDOWNER PROFILE
+# ============================================================
+
+@app.delete("/api/profiles/landowner/{user_id}")
+def delete_landowner_profile(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    profile = (
+        db.query(LandownerProfile)
+        .filter(
+            LandownerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    if not profile:
+
+        raise HTTPException(
+            status_code=404,
+            detail=
+            "Landowner profile not found."
+        )
+
+    db.delete(profile)
+
+    db.commit()
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Landowner profile deleted."
+    }
+
+# ============================================================
+# CREATE FOREIGNER PROFILE
+# ============================================================
+
+@app.post("/api/profiles/foreigner")
+def create_foreigner_profile(
+    request: ForeignerProfileRequest,
+    db: Session = Depends(get_db)
+):
+
+    user = (
+        db.query(User)
+        .filter(
+            User.id == request.user_id
+        )
+        .first()
+    )
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    existing = (
+        db.query(ForeignerProfile)
+        .filter(
+            ForeignerProfile.user_id ==
+            request.user_id
+        )
+        .first()
+    )
+
+    if existing:
+
+        raise HTTPException(
+            status_code=400,
+            detail=
+            "Foreigner profile already exists."
+        )
+
+    profile = ForeignerProfile(
+
+        user_id=request.user_id,
+
+        full_name=request.full_name,
+
+        nationality=request.nationality,
+
+        passport_number=
+            request.passport_number,
+
+        phone=request.phone,
+
+        email=request.email,
+
+        address=request.address,
+
+        purpose=request.purpose,
+
+        land_location=request.land_location,
+
+        land_name=request.land_name,
+
+        survey_number=request.survey_number,
+
+        district=request.district,
+
+        village=request.village,
+
+        area=request.area,
+
+        water_source=request.water_source
+    )
+
+    db.add(profile)
+
+    db.commit()
+
+    db.refresh(profile)
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Foreigner registration completed.",
+
+        "role":
+            "foreigner"
+    }
+
+# ============================================================
+# DELETE FOREIGNER PROFILE
+# ============================================================
+
+@app.delete("/api/profiles/foreigner/{user_id}")
+def delete_foreigner_profile(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    profile = (
+        db.query(ForeignerProfile)
+        .filter(
+            ForeignerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    if not profile:
+
+        raise HTTPException(
+            status_code=404,
+            detail=
+            "Foreigner profile not found."
+        )
+
+    db.delete(profile)
+
+    db.commit()
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Foreigner profile deleted."
+    }
+
+# ============================================================
+# CREATE WORKER PROFILE
+# ============================================================
+
+@app.post("/api/profiles/worker")
+def create_worker_profile(
+    request: WorkerProfileRequest,
+    db: Session = Depends(get_db)
+):
+
+    user = (
+        db.query(User)
+        .filter(
+            User.id == request.user_id
+        )
+        .first()
+    )
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    existing = (
+        db.query(WorkerProfile)
+        .filter(
+            WorkerProfile.user_id ==
+            request.user_id
+        )
+        .first()
+    )
+
+    if existing:
+
+        raise HTTPException(
+            status_code=400,
+            detail=
+            "Worker profile already exists."
+        )
+
+    profile = WorkerProfile(
+
+        user_id=request.user_id,
+
+        full_name=request.full_name,
+
+        phone=request.phone,
+
+        email=request.email,
+
+        address=request.address,
+
+        work_type=request.work_type,
+
+        experience=request.experience,
+
+        preferred_location=
+            request.preferred_location
+    )
+
+    db.add(profile)
+
+    db.commit()
+
+    db.refresh(profile)
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Worker registration completed.",
+
+        "role":
+            "worker"
+    }
+
+# ============================================================
+# DELETE WORKER PROFILE
+# ============================================================
+
+@app.delete("/api/profiles/worker/{user_id}")
+def delete_worker_profile(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    profile = (
+        db.query(WorkerProfile)
+        .filter(
+            WorkerProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    if not profile:
+
+        raise HTTPException(
+            status_code=404,
+            detail=
+            "Worker profile not found."
+        )
+
+    db.delete(profile)
+
+    db.commit()
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Worker profile deleted."
+    }
+
+# ============================================================
+# CREATE AGRICULTURE OFFICER PROFILE
+# ============================================================
+
+@app.post("/api/profiles/agriculture-officer")
+def create_agriculture_officer_profile(
+    request: AgricultureOfficerProfileRequest,
+    db: Session = Depends(get_db)
+):
+
+    user = (
+        db.query(User)
+        .filter(
+            User.id == request.user_id
+        )
+        .first()
+    )
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    existing = (
+        db.query(AgricultureOfficerProfile)
+        .filter(
+            AgricultureOfficerProfile.user_id ==
+            request.user_id
+        )
+        .first()
+    )
+
+    if existing:
+
+        raise HTTPException(
+            status_code=400,
+            detail=
+            "Agriculture officer profile already exists."
+        )
+
+    profile = AgricultureOfficerProfile(
+
+        user_id=request.user_id,
+
+        full_name=request.full_name,
+
+        employee_id=request.employee_id,
+
+        department=request.department,
+
+        designation=request.designation,
+
+        phone=request.phone,
+
+        email=request.email,
+
+        district=request.district,
+
+        office_address=
+            request.office_address
+    )
+
+    db.add(profile)
+
+    db.commit()
+
+    db.refresh(profile)
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Agriculture officer registration completed.",
+
+        "role":
+            "agriculture_officer"
+    }
+
+# ============================================================
+# DELETE AGRICULTURE OFFICER PROFILE
+# ============================================================
+
+@app.delete(
+    "/api/profiles/agriculture-officer/{user_id}"
+)
+def delete_agriculture_officer_profile(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    profile = (
+        db.query(AgricultureOfficerProfile)
+        .filter(
+            AgricultureOfficerProfile.user_id ==
+            user_id
+        )
+        .first()
+    )
+
+    if not profile:
+
+        raise HTTPException(
+            status_code=404,
+            detail=
+            "Agriculture officer profile not found."
+        )
+
+    db.delete(profile)
+
+    db.commit()
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Agriculture officer profile deleted."
+    }
+
+# ============================================================
+# CREATE TERRACE FARMING PROFILE
+# ============================================================
+
+@app.post("/api/profiles/terrace")
+def create_terrace_profile(
+    request: TerraceProfileRequest,
+    db: Session = Depends(get_db)
+):
+
+    user = (
+        db.query(User)
+        .filter(
+            User.id == request.user_id
+        )
+        .first()
+    )
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    existing = (
+        db.query(TerraceProfile)
+        .filter(
+            TerraceProfile.user_id ==
+            request.user_id
+        )
+        .first()
+    )
+
+    if existing:
+
+        raise HTTPException(
+            status_code=400,
+            detail=
+            "Terrace farming profile already exists."
+        )
+
+    profile = TerraceProfile(
+
+        user_id=request.user_id,
+
+        terrace_type=request.terrace_type,
+
+        name=request.name,
+
+        location=request.location,
+
+        area=request.area,
+
+        crop=request.crop,
+
+        number_of_plants=
+            request.number_of_plants,
+
+        water_source=request.water_source
+    )
+
+    db.add(profile)
+
+    db.commit()
+
+    db.refresh(profile)
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Terrace farming registration completed.",
+
+        "role":
+            "terrace"
+    }
+
+# ============================================================
+# DELETE TERRACE FARMING PROFILE
+# ============================================================
+
+@app.delete("/api/profiles/terrace/{user_id}")
+def delete_terrace_profile(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    profile = (
+        db.query(TerraceProfile)
+        .filter(
+            TerraceProfile.user_id == user_id
+        )
+        .first()
+    )
+
+    if not profile:
+
+        raise HTTPException(
+            status_code=404,
+            detail=
+            "Terrace farming profile not found."
+        )
+
+    db.delete(profile)
+
+    db.commit()
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Terrace farming profile deleted."
     }
