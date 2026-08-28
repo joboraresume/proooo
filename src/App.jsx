@@ -1,26 +1,22 @@
+import React from "react";
 import {
   BrowserRouter,
   Routes,
-  Route
+  Route,
+  Navigate
 } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
-
 import Dashboard from "./pages/Dashboard";
 
-import RoleSelection from "./pages/RoleSelection";
-
-import FarmerRegistration from "./pages/FarmerRegistration";
 import LandownerRegistration from "./pages/LandownerRegistration";
-import ForeignerRegistration from "./pages/ForeignerRegistration";
-import WorkerRegistration from "./pages/WorkerRegistration";
-import AgricultureOfficerRegistration from "./pages/AgricultureOfficerRegistration";
 
-import TerraceFarming from "./pages/TerraceFarming";
-import TerraceRegistration from "./pages/TerraceRegistration";
+import LandDashboard from "./pages/LandDashboard";
+
+import "./App.css";
 
 
 function App() {
@@ -31,9 +27,7 @@ function App() {
 
       <Routes>
 
-        {/* =========================
-            LANDING
-        ========================= */}
+        {/* ================= HOME ================= */}
 
         <Route
           path="/"
@@ -41,9 +35,7 @@ function App() {
         />
 
 
-        {/* =========================
-            AUTHENTICATION
-        ========================= */}
+        {/* ================= AUTHENTICATION ================= */}
 
         <Route
           path="/login"
@@ -61,116 +53,40 @@ function App() {
         />
 
 
-        {/* =========================
-            ROLE SELECTION
-        ========================= */}
+        {/* ================= MAIN DASHBOARD ================= */}
 
         <Route
-          path="/role-selection"
-          element={<RoleSelection />}
+          path="/dashboard"
+          element={<Dashboard />}
         />
 
 
-        {/* =========================
-            FARMER
-        ========================= */}
+        {/* ================= LAND REGISTRATION ================= */}
 
-        <Route
-          path="/farmer-registration"
-          element={<FarmerRegistration />}
-        />
-
-
-        {/* =========================
-            LANDOWNER
-        ========================= */}
-
-        <Route
-          path="/landowner-registration"
-          element={<LandownerRegistration />}
-        />
-
-        {/* Keep this route because
-            your existing Dashboard
-            currently uses /land-registration */}
         <Route
           path="/land-registration"
           element={<LandownerRegistration />}
         />
 
 
-        {/* =========================
-            FOREIGNER
-        ========================= */}
+        {/* ================= REGISTERED LAND DASHBOARD ================= */}
 
         <Route
-          path="/foreigner-registration"
-          element={<ForeignerRegistration />}
-        />
-
-        {/* Optional old route */}
-        <Route
-          path="/foreigner"
-          element={<ForeignerRegistration />}
+          path="/land-dashboard"
+          element={<LandDashboard />}
         />
 
 
-        {/* =========================
-            WORKER
-        ========================= */}
+        {/* ================= INVALID URL ================= */}
 
         <Route
-          path="/worker-registration"
-          element={<WorkerRegistration />}
-        />
-
-        {/* Optional old route */}
-        <Route
-          path="/worker"
-          element={<WorkerRegistration />}
-        />
-
-
-        {/* =========================
-            AGRICULTURE OFFICER
-        ========================= */}
-
-        <Route
-          path="/agriculture-officer-registration"
-          element={<AgricultureOfficerRegistration />}
-        />
-
-        {/* Optional old route */}
-        <Route
-          path="/agriculture-officer"
-          element={<AgricultureOfficerRegistration />}
-        />
-
-
-        {/* =========================
-            TERRACE FARMING
-        ========================= */}
-
-        <Route
-          path="/terrace-farming"
-          element={<TerraceFarming />}
-        />
-
-        <Route
-          path="/terrace-registration"
-          element={<TerraceRegistration />}
-        />
-
-
-        {/* =========================
-            DASHBOARD
-            Already implemented by
-            another team member
-        ========================= */}
-
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
+          path="*"
+          element={
+            <Navigate
+              to="/"
+              replace
+            />
+          }
         />
 
       </Routes>
@@ -179,6 +95,5 @@ function App() {
 
   );
 }
-
 
 export default App;
