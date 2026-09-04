@@ -151,7 +151,8 @@ function TerraceRegistration() {
       );
 
 
-      navigate("/role-selection");
+      localStorage.setItem("showDashboardAfterRegistration", "true");
+      navigate("/dashboard");
 
 
     } catch (error) {
@@ -176,7 +177,7 @@ function TerraceRegistration() {
           type="button"
           className="registration-back"
           onClick={() =>
-            navigate("/terrace-farming")
+            navigate("/dashboard")
           }
         >
           ← Back

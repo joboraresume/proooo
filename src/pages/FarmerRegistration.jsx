@@ -100,7 +100,8 @@ function FarmerRegistration() {
       }
 
       alert("Farmer registration completed successfully!");
-      navigate("/role-selection");
+      localStorage.setItem("showDashboardAfterRegistration", "true");
+      navigate("/dashboard");
 
     } catch (error) {
       console.error("Error creating farmer profile:", error);
@@ -114,7 +115,7 @@ function FarmerRegistration() {
         <button
           type="button"
           className="registration-back"
-          onClick={() => navigate("/role-selection")}
+          onClick={() => navigate("/dashboard")}
         >
           ← Back
         </button>

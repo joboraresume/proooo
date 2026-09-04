@@ -1,15 +1,101 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LandSidebar from "../components/LandSidebar";
 import "./LandDashboard.css";
 
 function LandDashboard() {
+  const navigate = useNavigate();
+
+  const [showDashboard, setShowDashboard] = useState(true);
+  const [user, setUser] = useState(null);
+  const [profiles, setProfiles] = useState({
+    farmer: false,
+    landowner: false,
+    foreigner: false,
+    worker: false,
+    agriculture_officer: false,
+    terrace: false,
+  });
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("agrisenseUser");
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+      fetchProfiles();
+    }
+  }, []);
+
+  const fetchProfiles = async () => {
+    try {
+      const userStr = localStorage.getItem("agrisenseUser");
+      if (!userStr) return;
+
+      const user = JSON.parse(userStr);
+      const response = await fetch(`http://localhost:5000/api/profiles/${user.id}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfiles({
+          farmer: data.farmer || false,
+          landowner: data.landowner || false,
+          foreigner: data.foreigner || false,
+          worker: data.worker || false,
+          agriculture_officer: data.agriculture_officer || false,
+          terrace: data.terrace || false,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching profiles:", err);
+    }
+  };
+
+  const deleteRoleProfile = async (e, apiRole) => {
+    e.stopPropagation();
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete your registered role profile?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const userStr = localStorage.getItem("agrisenseUser");
+      if (!userStr) return;
+
+      const user = JSON.parse(userStr);
+      const response = await fetch(
+        `http://localhost:5000/api/profiles/${apiRole}/${user.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        alert("Role profile deleted successfully!");
+        fetchProfiles();
+      } else {
+        const data = await response.json();
+        alert(data.detail || "Failed to delete role profile.");
+      }
+    } catch (err) {
+      console.error("Error deleting role:", err);
+      alert("Unable to connect to server to delete role.");
+    }
+  };
 
   const handleNavigation = (item) => {
-    console.log("Selected:", item);
+    if (item === "land-details") {
+      navigate("/land-details");
+    } else if (item === "overview") {
+      // Already on overview
+    } else {
+      console.log("Selected:", item);
+    }
   };
 
   const handleLogout = () => {
-    alert("Logged out successfully");
+    localStorage.removeItem("agrisenseUser");
+    navigate("/login");
   };
 
   const handleDeleteAccount = () => {
@@ -43,11 +129,18 @@ function LandDashboard() {
             <h1>Dashboard</h1>
 
             <p>
-              Welcome back, Ramesh!
+              Welcome back, {user?.name || user?.phone || "User"}!
             </p>
           </div>
 
           <div className="topbar-right">
+
+            <button
+              className="show-dashboard-btn"
+              onClick={() => setShowDashboard(!showDashboard)}
+            >
+              {showDashboard ? "Manage Roles" : "Show Dashboard"}
+            </button>
 
             <button className="notification-button">
               🔔
@@ -59,8 +152,8 @@ function LandDashboard() {
               </div>
 
               <div>
-                <strong>Ramesh</strong>
-                <span>Farmer</span>
+                <strong>{user?.name || "User"}</strong>
+                <span>Landowner</span>
               </div>
             </div>
 
@@ -68,7 +161,115 @@ function LandDashboard() {
 
         </header>
 
+        {/* ROLE MANAGEMENT SECTION */}
+        {!showDashboard && (
+          <section className="role-management-section">
+            <h2>Your Registered Roles</h2>
+            <div className="role-cards-grid">
 
+              {profiles.farmer && (
+                <div className="role-card-item">
+                  <div className="role-card-icon">👨‍🌾</div>
+                  <div className="role-card-info">
+                    <h3>Farmer</h3>
+                    <p>Registered</p>
+                  </div>
+                  <button
+                    className="delete-role-btn"
+                    onClick={(e) => deleteRoleProfile(e, "farmer")}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+
+              {profiles.landowner && (
+                <div className="role-card-item">
+                  <div className="role-card-icon">🏡</div>
+                  <div className="role-card-info">
+                    <h3>Landowner</h3>
+                    <p>Registered</p>
+                  </div>
+                  <button
+                    className="delete-role-btn"
+                    onClick={(e) => deleteRoleProfile(e, "landowner")}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+
+              {profiles.foreigner && (
+                <div className="role-card-item">
+                  <div className="role-card-icon">🌐</div>
+                  <div className="role-card-info">
+                    <h3>Foreigner</h3>
+                    <p>Registered</p>
+                  </div>
+                  <button
+                    className="delete-role-btn"
+                    onClick={(e) => deleteRoleProfile(e, "foreigner")}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+
+              {profiles.worker && (
+                <div className="role-card-item">
+                  <div className="role-card-icon">👷</div>
+                  <div className="role-card-info">
+                    <h3>Worker</h3>
+                    <p>Registered</p>
+                  </div>
+                  <button
+                    className="delete-role-btn"
+                    onClick={(e) => deleteRoleProfile(e, "worker")}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+
+              {profiles.agriculture_officer && (
+                <div className="role-card-item">
+                  <div className="role-card-icon">👨‍💼</div>
+                  <div className="role-card-info">
+                    <h3>Agriculture Officer</h3>
+                    <p>Registered</p>
+                  </div>
+                  <button
+                    className="delete-role-btn"
+                    onClick={(e) => deleteRoleProfile(e, "agriculture-officer")}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+
+              {profiles.terrace && (
+                <div className="role-card-item">
+                  <div className="role-card-icon">🪴</div>
+                  <div className="role-card-info">
+                    <h3>Terrace Farming</h3>
+                    <p>Registered</p>
+                  </div>
+                  <button
+                    className="delete-role-btn"
+                    onClick={(e) => deleteRoleProfile(e, "terrace")}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </section>
+        )}
+
+        {/* MAIN DASHBOARD CONTENT */}
+        {showDashboard && (
+          <div className="dashboard-content-wrapper">
         {/* SUMMARY CARDS */}
         <section className="summary-grid">
 
@@ -513,6 +714,8 @@ function LandDashboard() {
           </div>
 
         </section>
+          </div>
+        )}
 
       </main>
 

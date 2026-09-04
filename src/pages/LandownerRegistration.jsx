@@ -195,7 +195,7 @@ function LandownerRegistration() {
       );
 
 
-      navigate("/role-selection");
+      navigate("/land-dashboard");
 
 
     } catch (error) {
@@ -220,7 +220,7 @@ function LandownerRegistration() {
           type="button"
           className="registration-back"
           onClick={() =>
-            navigate("/role-selection")
+            navigate("/dashboard")
           }
         >
           ← Back

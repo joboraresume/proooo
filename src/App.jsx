@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   BrowserRouter,
   Routes,
@@ -10,11 +11,20 @@ import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+
 import Dashboard from "./pages/Dashboard";
 
+
+import FarmerRegistration from "./pages/FarmerRegistration";
 import LandownerRegistration from "./pages/LandownerRegistration";
+import ForeignerRegistration from "./pages/ForeignerRegistration";
+import WorkerRegistration from "./pages/WorkerRegistration";
+import AgricultureOfficerRegistration from "./pages/AgricultureOfficerRegistration";
+
+import TerraceRegistration from "./pages/TerraceRegistration";
 
 import LandDashboard from "./pages/LandDashboard";
+import LandDetails from "./pages/LandDetails";
 
 import "./App.css";
 
@@ -53,7 +63,41 @@ function App() {
         />
 
 
-        {/* ================= MAIN DASHBOARD ================= */}
+
+        {/* ================= REGISTRATION PAGES ================= */}
+
+        <Route
+          path="/farmer-registration"
+          element={<FarmerRegistration />}
+        />
+
+        <Route
+          path="/landowner-registration"
+          element={<LandownerRegistration />}
+        />
+
+        <Route
+          path="/foreigner-registration"
+          element={<ForeignerRegistration />}
+        />
+
+        <Route
+          path="/worker-registration"
+          element={<WorkerRegistration />}
+        />
+
+        <Route
+          path="/agriculture-officer-registration"
+          element={<AgricultureOfficerRegistration />}
+        />
+
+        <Route
+          path="/terrace-farming"
+          element={<TerraceRegistration />}
+        />
+
+
+        {/* ================= DASHBOARD ================= */}
 
         <Route
           path="/dashboard"
@@ -61,19 +105,16 @@ function App() {
         />
 
 
-        {/* ================= LAND REGISTRATION ================= */}
-
-        <Route
-          path="/land-registration"
-          element={<LandownerRegistration />}
-        />
-
-
-        {/* ================= REGISTERED LAND DASHBOARD ================= */}
+        {/* ================= LAND DASHBOARD ================= */}
 
         <Route
           path="/land-dashboard"
           element={<LandDashboard />}
+        />
+
+        <Route
+          path="/land-details"
+          element={<LandDetails />}
         />
 
 
@@ -94,6 +135,7 @@ function App() {
     </BrowserRouter>
 
   );
+
 }
 
 export default App;

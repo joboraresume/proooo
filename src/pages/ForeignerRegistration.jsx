@@ -186,7 +186,8 @@ function ForeignerRegistration() {
       );
 
 
-      navigate("/role-selection");
+      localStorage.setItem("showDashboardAfterRegistration", "true");
+      navigate("/dashboard");
 
 
     } catch (error) {
@@ -211,7 +212,7 @@ function ForeignerRegistration() {
           type="button"
           className="registration-back"
           onClick={() =>
-            navigate("/role-selection")
+            navigate("/dashboard")
           }
         >
           ← Back

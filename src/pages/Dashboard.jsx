@@ -1,334 +1,212 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 function Dashboard() {
-  const [page, setPage] = useState("dashboard");
-
   const navigate = useNavigate();
 
-  // Go to main dashboard
-  const goDashboard = () => {
-    setPage("dashboard");
+  const [profiles, setProfiles] = useState({
+    farmer: false,
+    landowner: false,
+    foreigner: false,
+    worker: false,
+    agriculture_officer: false,
+    terrace: false,
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [showFieldSubOptions, setShowFieldSubOptions] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // ================= FETCH USER ROLE PROFILES =================
+
+  const fetchProfiles = async () => {
+    try {
+      const userStr = localStorage.getItem("agrisenseUser");
+
+      if (!userStr) {
+        navigate("/login");
+        return;
+      }
+
+      const user = JSON.parse(userStr);
+
+      const response = await fetch(
+        `http://localhost:5000/api/profiles/${user.id}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        setProfiles({
+          farmer: data.farmer || false,
+          landowner: data.landowner || false,
+          foreigner: data.foreigner || false,
+          worker: data.worker || false,
+          agriculture_officer: data.agriculture_officer || false,
+          terrace: data.terrace || false,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching profiles:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // -----------------------------------------
-  // FIELD PAGE
-  // -----------------------------------------
+  // ================= LOAD PROFILES =================
 
-  if (page === "own-land") {
+  useEffect(() => {
+    fetchProfiles();
+    const userStr = localStorage.getItem("agrisenseUser");
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+    }
+
+    // Check if we should show dashboard after registration
+    const showDashboardFlag = localStorage.getItem("showDashboardAfterRegistration");
+    if (showDashboardFlag === "true") {
+      setShowDashboard(true);
+      localStorage.removeItem("showDashboardAfterRegistration");
+    }
+  }, []);
+
+  // ================= ROLE SELECTION =================
+
+  const selectRole = (role) => {
+    localStorage.setItem("agrisenseRole", role);
+
+    switch (role) {
+      // ================= FARMER =================
+
+      case "farmer":
+        if (profiles.farmer) {
+          // Change this route later if Farmer dashboard is created
+          navigate("/dashboard");
+        } else {
+          navigate("/farmer-registration");
+        }
+        break;
+
+      // ================= LANDOWNER =================
+
+      case "landowner":
+        if (profiles.landowner) {
+          navigate("/land-dashboard");
+        } else {
+          navigate("/landowner-registration");
+        }
+        break;
+
+      // ================= FOREIGNER =================
+
+      case "foreigner":
+        if (profiles.foreigner) {
+          // Change when Foreigner dashboard is available
+          navigate("/dashboard");
+        } else {
+          navigate("/foreigner-registration");
+        }
+        break;
+
+      // ================= WORKER =================
+
+      case "worker":
+        if (profiles.worker) {
+          // Change when Worker dashboard is available
+          navigate("/dashboard");
+        } else {
+          navigate("/worker-registration");
+        }
+        break;
+
+      // ================= AGRICULTURE OFFICER =================
+
+      case "agriculture-officer":
+        if (profiles.agriculture_officer) {
+          // Change when Agriculture Officer dashboard is available
+          navigate("/dashboard");
+        } else {
+          navigate("/agriculture-officer-registration");
+        }
+        break;
+
+      // ================= TERRACE FARMING =================
+
+      case "terrace-farming":
+        if (profiles.terrace) {
+          // Change when Terrace dashboard is available
+          navigate("/dashboard");
+        } else {
+          navigate("/terrace-farming");
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  // ================= DELETE ROLE =================
+
+  const deleteRoleProfile = async (e, apiRole) => {
+    e.stopPropagation();
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete your registered role profile?"
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      const userStr = localStorage.getItem("agrisenseUser");
+
+      if (!userStr) {
+        return;
+      }
+
+      const user = JSON.parse(userStr);
+
+      const response = await fetch(
+        `http://localhost:5000/api/profiles/${apiRole}/${user.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        alert("Role profile deleted successfully!");
+
+        fetchProfiles();
+      } else {
+        const data = await response.json();
+
+        alert(data.detail || "Failed to delete role profile.");
+      }
+    } catch (err) {
+      console.error("Error deleting role:", err);
+
+      alert("Unable to connect to server to delete role.");
+    }
+  };
+
+  // ================= LOADING =================
+
+  if (loading) {
     return (
       <div className="dashboard-page">
-
-        <header className="top-header">
-
-          <button
-            className="back-button"
-            onClick={() => setPage("field")}
-          >
-            ←
-          </button>
-
-          <h2>My Own Land</h2>
-
-          <div className="header-bell">
-            🔔
-          </div>
-
-        </header>
-
-
-        <main className="sub-page">
-
-          <h1>My Own Land</h1>
-
-          <p className="sub-description">
-            Manage and register your own agricultural land.
-          </p>
-
-
-          <div className="sub-options">
-
-            {/* MY OWN LAND */}
-
-            <button
-              className="sub-option"
-              onClick={() => navigate("/land-registration")}
-            >
-
-              <div className="sub-icon">
-                📋
-              </div>
-
-              <div className="sub-text">
-                <h3> Land Registration</h3>
-
-                <p>
-                  Register your agricultural land
-                </p>
-              </div>
-
-              <span className="option-arrow">
-                →
-              </span>
-
-            </button>
-
-
-            {/* RENT */}
-
-            <button
-              className="sub-option"
-              onClick={() => setPage("rent")}
-            >
-
-              <div className="sub-icon">
-                🤝
-              </div>
-
-              <div className="sub-text">
-                <h3>Rent</h3>
-
-                <p>
-                  Manage rented land
-                </p>
-              </div>
-
-              <span className="option-arrow">
-                →
-              </span>
-
-            </button>
-
-          </div>
-
-        </main>
-
+        <div className="loading-container">
+          <h1>Loading...</h1>
+        </div>
       </div>
     );
   }
 
 
-  // -----------------------------------------
-  // TERRACE FARMING PAGE
-  // -----------------------------------------
-
-  if (page === "terrace") {
-    return (
-      <div className="dashboard-page">
-
-        <header className="top-header">
-
-          <button
-            className="back-button"
-            onClick={goDashboard}
-          >
-            ←
-          </button>
-
-          <h2>Terrace Farming</h2>
-
-          <div className="header-bell">
-            🔔
-          </div>
-
-        </header>
-
-
-        <main className="sub-page">
-
-          <h1>Choose an option</h1>
-
-          <p className="sub-description">
-            Select how you cultivate your terrace garden.
-          </p>
-
-
-          <div className="sub-options">
-
-            {/* SOIL */}
-
-            <button
-              className="sub-option"
-              onClick={() => setPage("soil")}
-            >
-
-              <div className="sub-icon">
-                🌱
-              </div>
-
-              <div className="sub-text">
-
-                <h3>
-                  Cultivated in Soil
-                </h3>
-
-                <p>
-                  Grow crops in soil
-                </p>
-
-              </div>
-
-              <span className="option-arrow">
-                →
-              </span>
-
-            </button>
-
-
-            {/* VASE */}
-
-            <button
-              className="sub-option"
-              onClick={() => setPage("vase")}
-            >
-
-              <div className="sub-icon">
-                🪴
-              </div>
-
-              <div className="sub-text">
-
-                <h3>
-                  Cultivated in Vase
-                </h3>
-
-                <p>
-                  Grow crops in vases / pots
-                </p>
-
-              </div>
-
-              <span className="option-arrow">
-                →
-              </span>
-
-            </button>
-
-          </div>
-
-        </main>
-
-      </div>
-    );
-  }
-
-
-  // -----------------------------------------
-  // MY OWN LAND PAGE
-  // -----------------------------------------
-
-  if (page === "own-land") {
-    return (
-      <SimplePage
-        title="My Own Land"
-        icon="🌾"
-        description="Register and manage your own agricultural land."
-        back={() => setPage("field")}
-      />
-    );
-  }
-
-
-  // -----------------------------------------
-  // RENT PAGE
-  // -----------------------------------------
-
-  if (page === "rent") {
-    return (
-      <SimplePage
-        title="Rent"
-        icon="🤝"
-        description="Register and manage agricultural land taken on rent."
-        back={() => setPage("field")}
-      />
-    );
-  }
-
-
-  // -----------------------------------------
-  // SOIL PAGE
-  // -----------------------------------------
-
-  if (page === "soil") {
-    return (
-      <SimplePage
-        title="Cultivated in Soil"
-        icon="🌱"
-        description="Manage terrace farming where crops are cultivated directly in soil."
-        back={() => setPage("terrace")}
-      />
-    );
-  }
-
-
-  // -----------------------------------------
-  // VASE PAGE
-  // -----------------------------------------
-
-  if (page === "vase") {
-    return (
-      <SimplePage
-        title="Cultivated in Vase"
-        icon="🪴"
-        description="Manage terrace farming using vases, containers, or pots."
-        back={() => setPage("terrace")}
-      />
-    );
-  }
-
-
-  // -----------------------------------------
-  // FOREIGNERS PAGE
-  // -----------------------------------------
-
-  if (page === "foreigners") {
-    return (
-      <SimplePage
-        title="Foreigners"
-        icon="🌍"
-        description="Agriculture information and available services for foreigners."
-        back={goDashboard}
-      />
-    );
-  }
-
-
-  // -----------------------------------------
-  // WORKER PAGE
-  // -----------------------------------------
-
-  if (page === "worker") {
-    return (
-      <SimplePage
-        title="Worker"
-        icon="👨‍🌾"
-        description="Find agricultural work opportunities and manage worker activities."
-        back={goDashboard}
-      />
-    );
-  }
-
-
-  // -----------------------------------------
-  // AGRICULTURE OFFICER PAGE
-  // -----------------------------------------
-
-  if (page === "officer") {
-    return (
-      <SimplePage
-        title="Agriculture Officer"
-        icon="👮"
-        description="Agricultural support, farmer assistance, and farm monitoring."
-        back={goDashboard}
-      />
-    );
-  }
-
-
-  // -----------------------------------------
-  // MAIN DASHBOARD
-  // -----------------------------------------
+  // ================= PAGE =================
 
   return (
     <div className="dashboard-page">
@@ -356,6 +234,13 @@ function Dashboard() {
 
         <div className="header-right">
 
+          <button
+            className="show-dashboard-btn"
+            onClick={() => setShowDashboard(!showDashboard)}
+          >
+            {showDashboard ? "Role Selection" : "Show Dashboard"}
+          </button>
+
           <span className="notification">
             🔔
           </span>
@@ -369,34 +254,128 @@ function Dashboard() {
       </header>
 
 
-      {/* WELCOME */}
+      {/* WELCOME - ROLE SELECTION */}
 
-      <section className="welcome">
+      {!showDashboard && (
+        <section className="welcome">
 
-        <h1>
-          Welcome to AgriSense!
-        </h1>
+          <h1>
+            Welcome to AgriSense!
+          </h1>
 
-        <p>
-          Choose the option that best describes you.
-        </p>
+          <p>
+            Choose the option that best describes you.
+          </p>
 
-      </section>
+        </section>
+      )}
 
 
-      {/* OPTIONS */}
+      {/* DASHBOARD VIEW */}
+      {showDashboard && (
+        <section className="dashboard-view-section">
+          <div className="dashboard-user-profile">
+            <div className="profile-avatar-large">
+              👤
+            </div>
+            <div className="profile-info">
+              <h2>{user?.name || user?.phone || "User"}</h2>
+              <p>Your registered roles: {Object.keys(profiles).filter(key => profiles[key]).join(", ")}</p>
+            </div>
+          </div>
 
-      <section className="dashboard-options">
+          <div className="dashboard-summary-cards">
+            <div className="summary-card">
+              <div className="summary-icon">🌾</div>
+              <div>
+                <h3>{profiles.farmer || profiles.landowner ? "Active" : "Not Registered"}</h3>
+                <p>Field Status</p>
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="summary-icon">📊</div>
+              <div>
+                <h3>{Object.keys(profiles).filter(key => profiles[key]).length}</h3>
+                <p>Registered Roles</p>
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="summary-icon">🏡</div>
+              <div>
+                <h3>{profiles.landowner ? "Yes" : "No"}</h3>
+                <p>Landowner</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="dashboard-roles-list">
+            <h3>Your Registered Roles</h3>
+            <div className="roles-grid">
+              {profiles.farmer && (
+                <div className="role-badge">
+                  <span className="role-icon">👨‍🌾</span>
+                  <span>Farmer</span>
+                </div>
+              )}
+              {profiles.landowner && (
+                <div className="role-badge">
+                  <span className="role-icon">🏡</span>
+                  <span>Landowner</span>
+                </div>
+              )}
+              {profiles.foreigner && (
+                <div className="role-badge">
+                  <span className="role-icon">🌐</span>
+                  <span>Foreigner</span>
+                </div>
+              )}
+              {profiles.worker && (
+                <div className="role-badge">
+                  <span className="role-icon">👷</span>
+                  <span>Worker</span>
+                </div>
+              )}
+              {profiles.agriculture_officer && (
+                <div className="role-badge">
+                  <span className="role-icon">👨‍💼</span>
+                  <span>Agriculture Officer</span>
+                </div>
+              )}
+              {profiles.terrace && (
+                <div className="role-badge">
+                  <span className="role-icon">🪴</span>
+                  <span>Terrace Farming</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {profiles.landowner && (
+            <button
+              className="go-to-land-dashboard-btn"
+              onClick={() => navigate("/land-dashboard")}
+            >
+              Go to Land Dashboard
+            </button>
+          )}
+        </section>
+      )}
+
+
+      {/* OPTIONS - ROLE SELECTION */}
+
+      {!showDashboard && (
+        <section className="dashboard-options">
 
         {/* FIELD */}
 
         <button
           className="dashboard-card"
-          onClick={() => setPage("field")}
+          onClick={() => setShowFieldSubOptions(!showFieldSubOptions)}
         >
 
           <div className="card-icon">
-            🌾
+            �
           </div>
 
           <h3>
@@ -408,17 +387,47 @@ function Dashboard() {
           </p>
 
           <span className="card-arrow">
-            →
+            {showFieldSubOptions ? "↓" : "→"}
           </span>
 
         </button>
+
+        {/* FIELD SUB-OPTIONS */}
+
+        {showFieldSubOptions && (
+          <div className="field-sub-options">
+            <button
+              className="sub-option-card"
+              onClick={() => navigate("/farmer-registration")}
+            >
+              <div className="card-icon">
+                👨‍🌾
+              </div>
+              <h3>Farmer</h3>
+              <p>Register as a farmer</p>
+              <span className="card-arrow">→</span>
+            </button>
+
+            <button
+              className="sub-option-card"
+              onClick={() => navigate("/landowner-registration")}
+            >
+              <div className="card-icon">
+                🏡
+              </div>
+              <h3>Landowner</h3>
+              <p>Register as a landowner</p>
+              <span className="card-arrow">→</span>
+            </button>
+          </div>
+        )}
 
 
         {/* FOREIGNERS */}
 
         <button
           className="dashboard-card"
-          onClick={() => setPage("foreigners")}
+          onClick={() => navigate("/foreigner-registration")}
         >
 
           <div className="card-icon">
@@ -444,7 +453,7 @@ function Dashboard() {
 
         <button
           className="dashboard-card"
-          onClick={() => setPage("worker")}
+          onClick={() => navigate("/worker-registration")}
         >
 
           <div className="card-icon">
@@ -470,11 +479,11 @@ function Dashboard() {
 
         <button
           className="dashboard-card"
-          onClick={() => setPage("officer")}
+          onClick={() => navigate("/agriculture-officer-registration")}
         >
 
           <div className="card-icon">
-            👮
+            �
           </div>
 
           <h3>
@@ -496,7 +505,7 @@ function Dashboard() {
 
         <button
           className="dashboard-card"
-          onClick={() => setPage("terrace")}
+          onClick={() => navigate("/terrace-farming")}
         >
 
           <div className="card-icon">
@@ -518,6 +527,7 @@ function Dashboard() {
         </button>
 
       </section>
+      )}
 
 
       {/* INFORMATION */}
@@ -534,60 +544,6 @@ function Dashboard() {
         </p>
 
       </section>
-
-    </div>
-  );
-}
-
-
-// =========================================
-// REUSABLE SIMPLE PAGE
-// =========================================
-
-function SimplePage({
-  title,
-  icon,
-  description,
-  back
-}) {
-  return (
-    <div className="dashboard-page">
-
-      <header className="top-header">
-
-        <button
-          className="back-button"
-          onClick={back}
-        >
-          ←
-        </button>
-
-        <h2>
-          {title}
-        </h2>
-
-        <div className="header-bell">
-          🔔
-        </div>
-
-      </header>
-
-
-      <main className="simple-page">
-
-        <div className="simple-icon">
-          {icon}
-        </div>
-
-        <h1>
-          {title}
-        </h1>
-
-        <p>
-          {description}
-        </p>
-
-      </main>
 
     </div>
   );
