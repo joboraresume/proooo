@@ -187,7 +187,7 @@ function ForeignerRegistration() {
 
 
       localStorage.setItem("showDashboardAfterRegistration", "true");
-      navigate("/dashboard");
+      navigate("/foreign-dashboard");
 
 
     } catch (error) {

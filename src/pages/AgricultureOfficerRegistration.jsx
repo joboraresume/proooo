@@ -149,7 +149,7 @@ function AgricultureOfficerRegistration() {
 
 
       localStorage.setItem("showDashboardAfterRegistration", "true");
-      navigate("/dashboard");
+      navigate("/agriculture-officer-dashboard");
 
 
     } catch (error) {

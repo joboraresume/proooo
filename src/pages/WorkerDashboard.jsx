@@ -53,15 +53,13 @@ const WorkerDashboard = () => {
 
     if (worker.latitude && worker.longitude) {
 
-      const url =
-        https://www.google.com/maps?q=${worker.latitude},${worker.longitude};
+      const url = `https://www.google.com/maps?q=${worker.latitude},${worker.longitude}`;
 
       window.open(url, "_blank");
 
     } else {
 
-      const location =
-        ${worker.place}, ${worker.district}, ${worker.state};
+      const location = `${worker.place}, ${worker.district}, ${worker.state}`;
 
       const url =
         `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -76,7 +74,7 @@ const WorkerDashboard = () => {
     {
       icon: <Sprout size={18} />,
       title: "Weeding & Soil Care",
-      field: ${worker.fieldName} · ${worker.place},
+      field: `${worker.fieldName} · ${worker.place}`,
       time: "Today, 8:00 AM",
       status: "Completed",
       statusClass: "completed",
@@ -84,7 +82,7 @@ const WorkerDashboard = () => {
     {
       icon: <Droplets size={18} />,
       title: "Irrigation Setup",
-      field: ${worker.fieldName} · ${worker.place},
+      field: `${worker.fieldName} · ${worker.place}`,
       time: "Today, 11:00 AM",
       status: "In Progress",
       statusClass: "progress",
@@ -92,7 +90,7 @@ const WorkerDashboard = () => {
     {
       icon: <Tractor size={18} />,
       title: "Harvesting Support",
-      field: ${worker.fieldName} · ${worker.place},
+      field: `${worker.fieldName} · ${worker.place}`,
       time: "Today, 3:00 PM",
       status: "Pending",
       statusClass: "pending",
@@ -327,7 +325,7 @@ const WorkerDashboard = () => {
                   >
 
                     <div
-                      className={task-icon task-${index}}
+                      className={`task-icon task-${index}`}
                     >
                       {task.icon}
                     </div>
@@ -349,7 +347,7 @@ const WorkerDashboard = () => {
                     </div>
 
                     <div
-                      className={task-status ${task.statusClass}}
+                      className={`task-status ${task.statusClass}`}
                     >
 
                       {task.statusClass === "completed" && (
@@ -436,9 +434,9 @@ const WorkerDashboard = () => {
                   <span>
                     {worker.place}
                     {worker.district &&
-                      , ${worker.district}}
+                      `, ${worker.district}`}
                     {worker.state &&
-                      , ${worker.state}}
+                      `, ${worker.state}`}
                   </span>
 
                 </div>

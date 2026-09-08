@@ -26,6 +26,10 @@ import TerraceRegistration from "./pages/TerraceRegistration";
 import LandDashboard from "./pages/LandDashboard";
 import LandDetails from "./pages/LandDetails";
 
+import ForeignDashboard from "./pages/ForeignDashboard";
+import WorkerDashboard from "./pages/WorkerDashboard";
+import AgricultureOfficerDashboard from "./pages/AgriculureofficerDashboard";
+
 import "./App.css";
 
 
@@ -61,7 +65,6 @@ function App() {
           path="/forgot-password"
           element={<ForgotPassword />}
         />
-
 
 
         {/* ================= REGISTRATION PAGES ================= */}
@@ -115,6 +118,24 @@ function App() {
         <Route
           path="/land-details"
           element={<LandDetails />}
+        />
+
+
+        {/* ================= ROLE-SPECIFIC DASHBOARDS ================= */}
+
+        <Route
+          path="/foreign-dashboard"
+          element={<ForeignDashboard />}
+        />
+
+        <Route
+          path="/worker-dashboard"
+          element={<WorkerDashboard />}
+        />
+
+        <Route
+          path="/agriculture-officer-dashboard"
+          element={<AgricultureOfficerDashboard />}
         />
 
 

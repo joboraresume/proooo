@@ -143,7 +143,7 @@ function WorkerRegistration() {
 
 
       localStorage.setItem("showDashboardAfterRegistration", "true");
-      navigate("/dashboard");
+      navigate("/worker-dashboard");
 
 
     } catch (error) {

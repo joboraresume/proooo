@@ -103,8 +103,7 @@ function Dashboard() {
 
       case "foreigner":
         if (profiles.foreigner) {
-          // Change when Foreigner dashboard is available
-          navigate("/dashboard");
+          navigate("/foreign-dashboard");
         } else {
           navigate("/foreigner-registration");
         }
@@ -114,8 +113,7 @@ function Dashboard() {
 
       case "worker":
         if (profiles.worker) {
-          // Change when Worker dashboard is available
-          navigate("/dashboard");
+          navigate("/worker-dashboard");
         } else {
           navigate("/worker-registration");
         }
@@ -125,8 +123,7 @@ function Dashboard() {
 
       case "agriculture-officer":
         if (profiles.agriculture_officer) {
-          // Change when Agriculture Officer dashboard is available
-          navigate("/dashboard");
+          navigate("/agriculture-officer-dashboard");
         } else {
           navigate("/agriculture-officer-registration");
         }
@@ -350,14 +347,40 @@ function Dashboard() {
             </div>
           </div>
 
-          {profiles.landowner && (
-            <button
-              className="go-to-land-dashboard-btn"
-              onClick={() => navigate("/land-dashboard")}
-            >
-              Go to Land Dashboard
-            </button>
-          )}
+          <div className="dashboard-action-buttons">
+            {profiles.landowner && (
+              <button
+                className="go-to-land-dashboard-btn"
+                onClick={() => navigate("/land-dashboard")}
+              >
+                Go to Land Dashboard
+              </button>
+            )}
+            {profiles.foreigner && (
+              <button
+                className="go-to-land-dashboard-btn"
+                onClick={() => navigate("/foreign-dashboard")}
+              >
+                Go to Foreigner Dashboard
+              </button>
+            )}
+            {profiles.worker && (
+              <button
+                className="go-to-land-dashboard-btn"
+                onClick={() => navigate("/worker-dashboard")}
+              >
+                Go to Worker Dashboard
+              </button>
+            )}
+            {profiles.agriculture_officer && (
+              <button
+                className="go-to-land-dashboard-btn"
+                onClick={() => navigate("/agriculture-officer-dashboard")}
+              >
+                Go to Agriculture Officer Dashboard
+              </button>
+            )}
+          </div>
         </section>
       )}
 
