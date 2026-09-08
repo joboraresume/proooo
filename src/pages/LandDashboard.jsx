@@ -1,710 +1,1104 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import LandSidebar from "../components/LandSidebar";
+import {
+  Home,
+  MapPin,
+  Radio,
+  Brain,
+  FileText,
+  Settings,
+  LogOut,
+  Bell,
+  ChevronDown,
+  Thermometer,
+  Droplets,
+  Wind,
+  FlaskConical,
+  Map,
+  Sparkles,
+  ClipboardList,
+  Eye,
+  Sprout,
+  Globe2,
+} from "lucide-react";
+
 import "./LandDashboard.css";
 
 function LandDashboard() {
-  const navigate = useNavigate();
-
-  const [showDashboard, setShowDashboard] = useState(true);
-  const [user, setUser] = useState(null);
-  const [profiles, setProfiles] = useState({
-    farmer: false,
-    landowner: false,
-    foreigner: false,
-    worker: false,
-    agriculture_officer: false,
-    terrace: false,
+  const [user, setUser] = useState({
+    name: "Landowner",
+    role: "Landowner",
   });
 
+  const [land, setLand] = useState({
+    landName: "My Agricultural Land",
+    country: "",
+    state: "",
+    province: "",
+    city: "",
+    district: "",
+    surveyNumber: "",
+    area: "",
+    crop: "",
+    latitude: "",
+    longitude: "",
+  });
+
+  const [showProfile, setShowProfile] = useState(false);
+
+  // =====================================================
+  // LOAD DATA FROM LOCAL STORAGE
+  // =====================================================
+
   useEffect(() => {
-    const userStr = localStorage.getItem("agrisenseUser");
-    if (userStr) {
-      setUser(JSON.parse(userStr));
-      fetchProfiles();
-    }
+    loadDashboardData();
   }, []);
 
-  const fetchProfiles = async () => {
+  const loadDashboardData = () => {
     try {
-      const userStr = localStorage.getItem("agrisenseUser");
-      if (!userStr) return;
+      const savedUser = localStorage.getItem("agrisenseUser");
+      const savedLand = localStorage.getItem("agrisenseLand");
 
-      const user = JSON.parse(userStr);
-      const response = await fetch(`http://localhost:5000/api/profiles/${user.id}`);
+      // USER
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
 
-      if (response.ok) {
-        const data = await response.json();
-        setProfiles({
-          farmer: data.farmer || false,
-          landowner: data.landowner || false,
-          foreigner: data.foreigner || false,
-          worker: data.worker || false,
-          agriculture_officer: data.agriculture_officer || false,
-          terrace: data.terrace || false,
-        });
+        if (parsedUser && typeof parsedUser === "object") {
+          setUser(parsedUser);
+        }
       }
-    } catch (err) {
-      console.error("Error fetching profiles:", err);
+
+      // LAND
+      if (savedLand) {
+        const parsedLand = JSON.parse(savedLand);
+
+        if (Array.isArray(parsedLand)) {
+          if (parsedLand.length > 0) {
+            setLand(parsedLand[0]);
+          }
+        } else if (
+          parsedLand &&
+          typeof parsedLand === "object"
+        ) {
+          setLand(parsedLand);
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Error loading AgriSense data:",
+        error
+      );
     }
   };
 
-  const deleteRoleProfile = async (e, apiRole) => {
-    e.stopPropagation();
+  // =====================================================
+  // GET LAND LOCATION
+  // =====================================================
 
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete your registered role profile?"
+  const getLocation = () => {
+    const locationParts = [
+      land.city,
+      land.district,
+      land.state,
+      land.province,
+      land.country,
+    ].filter(
+      (value) =>
+        value !== undefined &&
+        value !== null &&
+        String(value).trim() !== ""
     );
 
-    if (!confirmDelete) return;
-
-    try {
-      const userStr = localStorage.getItem("agrisenseUser");
-      if (!userStr) return;
-
-      const user = JSON.parse(userStr);
-      const response = await fetch(
-        `http://localhost:5000/api/profiles/${apiRole}/${user.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        alert("Role profile deleted successfully!");
-        fetchProfiles();
-      } else {
-        const data = await response.json();
-        alert(data.detail || "Failed to delete role profile.");
-      }
-    } catch (err) {
-      console.error("Error deleting role:", err);
-      alert("Unable to connect to server to delete role.");
+    if (locationParts.length > 0) {
+      return [...new Set(locationParts)].join(", ");
     }
+
+    if (
+      land.latitude !== undefined &&
+      land.longitude !== undefined &&
+      land.latitude !== "" &&
+      land.longitude !== ""
+    ) {
+      return `${land.latitude}, ${land.longitude}`;
+    }
+
+    return "Location not registered";
   };
 
-  const handleNavigation = (item) => {
-    if (item === "land-details") {
-      navigate("/land-details");
-    } else if (item === "overview") {
-      // Already on overview
+  // =====================================================
+  // VIEW LAND LOCATION
+  // =====================================================
+
+  const handleViewLocation = () => {
+    let location = "";
+
+    if (
+      land.latitude !== undefined &&
+      land.longitude !== undefined &&
+      land.latitude !== "" &&
+      land.longitude !== ""
+    ) {
+      location = `${land.latitude},${land.longitude}`;
     } else {
-      console.log("Selected:", item);
+      location = getLocation();
     }
+
+    if (
+      !location ||
+      location === "Location not registered"
+    ) {
+      alert("Land location is not available.");
+      return;
+    }
+
+    const mapUrl =
+      "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(location);
+
+    window.open(mapUrl, "_blank");
   };
+
+  // =====================================================
+  // NAVIGATION
+  // =====================================================
+
+  const goTo = (path) => {
+    window.location.href = path;
+  };
+
+  // =====================================================
+  // LOGOUT
+  // =====================================================
 
   const handleLogout = () => {
-    localStorage.removeItem("agrisenseUser");
-    navigate("/login");
-  };
-
-  const handleDeleteAccount = () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete your account?"
+    const confirmLogout = window.confirm(
+      "Are you sure you want to logout?"
     );
 
-    if (confirmDelete) {
-      alert("Account deletion requested");
+    if (!confirmLogout) {
+      return;
     }
+
+    localStorage.removeItem("agrisenseUser");
+
+    window.location.href = "/login";
   };
 
+  // =====================================================
+  // GENERATE REPORT
+  // =====================================================
+
+  const generateReport = () => {
+    const report = {
+      user: user,
+      land: land,
+      sensorData: {
+        temperature: "28.4 °C",
+        soilMoisture: "62 %",
+        humidity: "71 %",
+        soilPH: "6.7",
+      },
+      generatedAt: new Date().toLocaleString(),
+    };
+
+    const blob = new Blob(
+      [JSON.stringify(report, null, 2)],
+      {
+        type: "application/json",
+      }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "AgriSense-Land-Report.json";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  };
+
+  // =====================================================
+  // SENSOR DATA
+  // =====================================================
+
+  const sensors = [
+    {
+      title: "Temperature",
+      value: "28.4 °C",
+      status: "Normal",
+      icon: <Thermometer size={27} />,
+      className: "temperature",
+    },
+    {
+      title: "Soil Moisture",
+      value: "62 %",
+      status: "Optimal",
+      icon: <Droplets size={27} />,
+      className: "moisture",
+    },
+    {
+      title: "Humidity",
+      value: "71 %",
+      status: "Good",
+      icon: <Wind size={27} />,
+      className: "humidity",
+    },
+    {
+      title: "Soil pH",
+      value: "6.7",
+      status: "Optimal",
+      icon: <FlaskConical size={27} />,
+      className: "ph",
+    },
+  ];
+
   return (
-    <div className="registered-dashboard">
+    <div className="land-dashboard">
 
-      {/* LEFT SIDEBAR */}
-      <LandSidebar
-        activeItem="overview"
-        onNavigate={handleNavigation}
-        onLogout={handleLogout}
-        onDeleteAccount={handleDeleteAccount}
-      />
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
 
-      {/* RIGHT CONTENT */}
-      <main className="dashboard-main">
+      <aside className="land-sidebar">
 
-        {/* TOP BAR */}
-        <header className="dashboard-topbar">
+        {/* BRAND */}
+
+        <div className="sidebar-brand">
+
+          <div className="sidebar-logo">
+            <Sprout size={27} />
+          </div>
 
           <div>
-            <h1>Dashboard</h1>
+            <h2>AgriSense</h2>
 
             <p>
-              Welcome back, {user?.name || user?.phone || "User"}!
+              Smart Farming · Better Tomorrow
             </p>
           </div>
 
+        </div>
+
+        {/* NAVIGATION */}
+
+        <nav className="sidebar-navigation">
+
+          <button
+            className="sidebar-item active"
+            onClick={() =>
+              goTo("/land-dashboard")
+            }
+          >
+            <Home size={20} />
+            <span>Dashboard</span>
+          </button>
+
+          <button
+            className="sidebar-item"
+            onClick={() =>
+              goTo("/land-details")
+            }
+          >
+            <MapPin size={20} />
+            <span>Land Details</span>
+          </button>
+
+          <button
+            className="sidebar-item"
+            onClick={() =>
+              goTo("/sensor-data")
+            }
+          >
+            <Radio size={20} />
+            <span>Sensor Data</span>
+          </button>
+
+          <button
+            className="sidebar-item"
+            onClick={() =>
+              goTo("/ai-assistant")
+            }
+          >
+            <Brain size={20} />
+            <span>AI Assistant</span>
+          </button>
+
+          <button
+            className="sidebar-item"
+            onClick={generateReport}
+          >
+            <FileText size={20} />
+            <span>Reports</span>
+          </button>
+
+          <button
+            className="sidebar-item"
+            onClick={() =>
+              goTo("/settings")
+            }
+          >
+            <Settings size={20} />
+            <span>Settings</span>
+          </button>
+
+        </nav>
+
+        {/* LOGOUT */}
+
+        <button
+          className="sidebar-logout"
+          onClick={handleLogout}
+        >
+          <LogOut size={20} />
+          <span>Logout</span>
+        </button>
+
+      </aside>
+
+      {/* =================================================
+          MAIN CONTENT
+      ================================================= */}
+
+      <main className="land-main">
+
+        {/* =================================================
+            TOP BAR
+        ================================================= */}
+
+        <header className="land-topbar">
+
+          <div></div>
+
           <div className="topbar-right">
 
-            <button
-              className="show-dashboard-btn"
-              onClick={() => setShowDashboard(!showDashboard)}
-            >
-              {showDashboard ? "Manage Roles" : "Show Dashboard"}
-            </button>
+            {/* NOTIFICATION */}
 
             <button className="notification-button">
-              🔔
+
+              <Bell size={20} />
+
+              <span>3</span>
+
             </button>
 
-            <div className="profile-area">
-              <div className="profile-avatar">
-                👨‍🌾
-              </div>
+            {/* PROFILE */}
 
-              <div>
-                <strong>{user?.name || "User"}</strong>
-                <span>Landowner</span>
-              </div>
+            <div className="profile-wrapper">
+
+              <button
+                className="profile-button"
+                onClick={() =>
+                  setShowProfile(
+                    !showProfile
+                  )
+                }
+              >
+
+                <div className="profile-avatar">
+                  <span>👤</span>
+                </div>
+
+                <div className="profile-details">
+
+                  <strong>
+                    {user.name ||
+                      "Landowner"}
+                  </strong>
+
+                  <small>
+                    {user.role ||
+                      "Landowner"}
+                  </small>
+
+                </div>
+
+                <ChevronDown size={16} />
+
+              </button>
+
+              {showProfile && (
+
+                <div className="profile-dropdown">
+
+                  <strong>
+                    {user.name ||
+                      "Landowner"}
+                  </strong>
+
+                  <span>
+                    {user.email ||
+                      "Landowner Account"}
+                  </span>
+
+                  <button
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={15} />
+                    Logout
+                  </button>
+
+                </div>
+
+              )}
+
             </div>
 
           </div>
 
         </header>
 
-        {/* ROLE MANAGEMENT SECTION */}
-        {!showDashboard && (
-          <section className="role-management-section">
-            <h2>Your Registered Roles</h2>
-            <div className="role-cards-grid">
+        {/* =================================================
+            PAGE TITLE
+        ================================================= */}
 
-              {profiles.farmer && (
-                <div className="role-card-item">
-                  <div className="role-card-icon">👨‍🌾</div>
-                  <div className="role-card-info">
-                    <h3>Farmer</h3>
-                    <p>Registered</p>
-                  </div>
-                  <button
-                    className="delete-role-btn"
-                    onClick={(e) => deleteRoleProfile(e, "farmer")}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
+        <section className="page-title">
 
-              {profiles.landowner && (
-                <div className="role-card-item">
-                  <div className="role-card-icon">🏡</div>
-                  <div className="role-card-info">
-                    <h3>Landowner</h3>
-                    <p>Registered</p>
-                  </div>
-                  <button
-                    className="delete-role-btn"
-                    onClick={(e) => deleteRoleProfile(e, "landowner")}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
+          <h1>
+            Land Dashboard
+          </h1>
 
-              {profiles.foreigner && (
-                <div className="role-card-item">
-                  <div className="role-card-icon">🌐</div>
-                  <div className="role-card-info">
-                    <h3>Foreigner</h3>
-                    <p>Registered</p>
-                  </div>
-                  <button
-                    className="delete-role-btn"
-                    onClick={(e) => deleteRoleProfile(e, "foreigner")}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-
-              {profiles.worker && (
-                <div className="role-card-item">
-                  <div className="role-card-icon">👷</div>
-                  <div className="role-card-info">
-                    <h3>Worker</h3>
-                    <p>Registered</p>
-                  </div>
-                  <button
-                    className="delete-role-btn"
-                    onClick={(e) => deleteRoleProfile(e, "worker")}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-
-              {profiles.agriculture_officer && (
-                <div className="role-card-item">
-                  <div className="role-card-icon">👨‍💼</div>
-                  <div className="role-card-info">
-                    <h3>Agriculture Officer</h3>
-                    <p>Registered</p>
-                  </div>
-                  <button
-                    className="delete-role-btn"
-                    onClick={(e) => deleteRoleProfile(e, "agriculture-officer")}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-
-              {profiles.terrace && (
-                <div className="role-card-item">
-                  <div className="role-card-icon">🪴</div>
-                  <div className="role-card-info">
-                    <h3>Terrace Farming</h3>
-                    <p>Registered</p>
-                  </div>
-                  <button
-                    className="delete-role-btn"
-                    onClick={(e) => deleteRoleProfile(e, "terrace")}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-
-            </div>
-          </section>
-        )}
-
-        {/* MAIN DASHBOARD CONTENT */}
-        {showDashboard && (
-          <div className="dashboard-content-wrapper">
-        {/* SUMMARY CARDS */}
-        <section className="summary-grid">
-
-          {/* Total Fields */}
-          <div className="summary-card">
-
-            <div className="summary-icon">
-              🌾
-            </div>
-
-            <div>
-              <h3>12</h3>
-              <p>Total Fields</p>
-            </div>
-
-          </div>
-
-
-          {/* Active Sensors */}
-          <div className="summary-card">
-
-            <div className="summary-icon">
-              📡
-            </div>
-
-            <div>
-              <h3>3</h3>
-              <p>Active Sensors</p>
-            </div>
-
-          </div>
-
-
-          {/* Weather */}
-          <div className="summary-card">
-
-            <div className="summary-icon">
-              ☁️
-            </div>
-
-            <div>
-              <h3>28°C</h3>
-              <p>Current Weather</p>
-            </div>
-
-          </div>
-
-
-          {/* Soil Moisture */}
-          <div className="summary-card">
-
-            <div className="summary-icon">
-              💧
-            </div>
-
-            <div>
-              <h3>75%</h3>
-              <p>Soil Moisture</p>
-            </div>
-
-          </div>
+          <p>
+            Monitor your land, track sensor data
+            and manage your farming activities.
+          </p>
 
         </section>
 
+        {/* =================================================
+            SENSOR CARDS
+        ================================================= */}
 
-        {/* MAIN GRID */}
+        <section className="sensor-top-grid">
+
+          {sensors.map(
+            (sensor, index) => (
+
+              <div
+                className={
+                  "top-sensor-card " +
+                  sensor.className
+                }
+                key={index}
+              >
+
+                <div className="sensor-top-icon">
+                  {sensor.icon}
+                </div>
+
+                <div className="sensor-top-content">
+
+                  <span>
+                    {sensor.title}
+                  </span>
+
+                  <strong>
+                    {sensor.value}
+                  </strong>
+
+                  <small>
+                    <i></i>
+                    {sensor.status}
+                  </small>
+
+                </div>
+
+              </div>
+
+            )
+          )}
+
+        </section>
+
+        {/* =================================================
+            DASHBOARD GRID
+        ================================================= */}
+
         <section className="dashboard-grid">
 
-          {/* FIELD OVERVIEW */}
-          <div className="dashboard-card field-card">
+          {/* =================================================
+              LEFT SIDE
+          ================================================= */}
 
-            <div className="card-heading">
+          <div className="dashboard-left">
 
-              <h2>Field Overview</h2>
+            {/* SENSOR OVERVIEW */}
 
-              <select>
-                <option>All Fields</option>
-                <option>Field 1</option>
-                <option>Field 2</option>
-                <option>Field 3</option>
-                <option>Field 4</option>
-              </select>
+            <div className="dashboard-card chart-card">
+
+              <div className="card-header">
+
+                <h2>
+                  Sensor Data Overview
+                </h2>
+
+                <select defaultValue="7">
+
+                  <option value="7">
+                    Last 7 Days
+                  </option>
+
+                  <option value="30">
+                    Last 30 Days
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* CHART */}
+
+              <div className="simple-chart">
+
+                <div className="chart-y-axis">
+
+                  <span>100</span>
+                  <span>80</span>
+                  <span>60</span>
+                  <span>40</span>
+                  <span>20</span>
+                  <span>0</span>
+
+                </div>
+
+                <div className="chart-area">
+
+                  <div className="grid-line line-100"></div>
+                  <div className="grid-line line-80"></div>
+                  <div className="grid-line line-60"></div>
+                  <div className="grid-line line-40"></div>
+                  <div className="grid-line line-20"></div>
+                  <div className="grid-line line-0"></div>
+
+                  <svg
+                    viewBox="0 0 700 200"
+                    preserveAspectRatio="none"
+                  >
+
+                    {/* MOISTURE */}
+
+                    <polyline
+                      points="
+                        0,82
+                        110,80
+                        220,85
+                        330,75
+                        440,85
+                        550,60
+                        700,60
+                      "
+                      className="chart-moisture"
+                    />
+
+                    {/* TEMPERATURE */}
+
+                    <polyline
+                      points="
+                        0,145
+                        110,138
+                        220,140
+                        330,145
+                        440,143
+                        550,136
+                        700,140
+                      "
+                      className="chart-temperature"
+                    />
+
+                    {/* HUMIDITY */}
+
+                    <polyline
+                      points="
+                        0,110
+                        110,100
+                        220,108
+                        330,94
+                        440,105
+                        550,90
+                        700,87
+                      "
+                      className="chart-humidity"
+                    />
+
+                    {/* PH */}
+
+                    <polyline
+                      points="
+                        0,180
+                        110,178
+                        220,176
+                        330,176
+                        440,178
+                        550,176
+                        700,178
+                      "
+                      className="chart-ph"
+                    />
+
+                  </svg>
+
+                  <div className="chart-days">
+
+                    <span>Sep 1</span>
+                    <span>Sep 2</span>
+                    <span>Sep 3</span>
+                    <span>Sep 4</span>
+                    <span>Sep 5</span>
+                    <span>Sep 6</span>
+                    <span>Sep 7</span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* LEGEND */}
+
+              <div className="chart-legend">
+
+                <span>
+                  <i className="legend-green"></i>
+                  Moisture
+                </span>
+
+                <span>
+                  <i className="legend-red"></i>
+                  Temperature
+                </span>
+
+                <span>
+                  <i className="legend-blue"></i>
+                  Humidity
+                </span>
+
+                <span>
+                  <i className="legend-purple"></i>
+                  pH
+                </span>
+
+              </div>
 
             </div>
 
-            <div className="field-map">
+            {/* =================================================
+                RECENT SENSOR READINGS
+            ================================================= */}
 
-              <div className="map-placeholder">
-                <span>🗺️</span>
-                <p>Farm Map</p>
+            <div className="dashboard-card readings-card">
+
+              <div className="card-header">
+
+                <h2>
+                  Recent Sensor Readings
+                </h2>
+
+                <span className="live-badge">
+                  <i></i>
+                  Live
+                </span>
+
               </div>
 
-              <div className="field-label field-one">
-                Field 1
-              </div>
+              <div className="table-container">
 
-              <div className="field-label field-two">
-                Field 2
-              </div>
+                <table>
 
-              <div className="field-label field-three">
-                Field 3
-              </div>
+                  <thead>
 
-              <div className="field-label field-four">
-                Field 4
+                    <tr>
+
+                      <th>
+                        Date & Time
+                      </th>
+
+                      <th>
+                        Temperature (°C)
+                      </th>
+
+                      <th>
+                        Moisture (%)
+                      </th>
+
+                      <th>
+                        Humidity (%)
+                      </th>
+
+                      <th>
+                        pH
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    <tr>
+
+                      <td>
+                        <i className="status-dot"></i>
+                        07 Sep 2025, 10:25 AM
+                      </td>
+
+                      <td>28.4</td>
+                      <td>62</td>
+                      <td>71</td>
+                      <td>6.7</td>
+
+                    </tr>
+
+                    <tr>
+
+                      <td>
+                        <i className="status-dot"></i>
+                        07 Sep 2025, 09:55 AM
+                      </td>
+
+                      <td>28.1</td>
+                      <td>60</td>
+                      <td>69</td>
+                      <td>6.6</td>
+
+                    </tr>
+
+                    <tr>
+
+                      <td>
+                        <i className="status-dot"></i>
+                        07 Sep 2025, 09:25 AM
+                      </td>
+
+                      <td>27.9</td>
+                      <td>58</td>
+                      <td>68</td>
+                      <td>6.5</td>
+
+                    </tr>
+
+                    <tr>
+
+                      <td>
+                        <i className="status-dot"></i>
+                        07 Sep 2025, 08:55 AM
+                      </td>
+
+                      <td>27.6</td>
+                      <td>56</td>
+                      <td>66</td>
+                      <td>6.4</td>
+
+                    </tr>
+
+                  </tbody>
+
+                </table>
+
               </div>
 
             </div>
 
           </div>
 
+          {/* =================================================
+              RIGHT SIDE
+          ================================================= */}
 
-          {/* RECENT ALERTS */}
-          <div className="dashboard-card alerts-card">
+          <div className="dashboard-right">
 
-            <div className="card-heading">
+            {/* =================================================
+                LAND LOCATION
+            ================================================= */}
 
-              <h2>Recent Alerts</h2>
+            <div className="dashboard-card location-card">
 
-              <button className="view-all">
-                View all
+              <div className="location-image">
+
+                <div className="location-overlay">
+
+                  <MapPin size={23} />
+
+                  <div>
+
+                    <span>
+                      Land Location
+                    </span>
+
+                    <strong>
+                      {getLocation()}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* LAND INFORMATION */}
+
+              <div className="land-information">
+
+                <div className="land-info-row">
+
+                  <ClipboardList size={18} />
+
+                  <div>
+
+                    <span>
+                      Survey Number
+                    </span>
+
+                    <strong>
+                      {land.surveyNumber ||
+                        "Not Registered"}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+                <div className="land-info-row">
+
+                  <Map size={18} />
+
+                  <div>
+
+                    <span>
+                      Total Area
+                    </span>
+
+                    <strong>
+                      {land.area ||
+                        land.acres ||
+                        land.landArea ||
+                        "0"}{" "}
+                      Acres
+                    </strong>
+
+                  </div>
+
+                </div>
+
+                <div className="land-info-row">
+
+                  <Sprout size={18} />
+
+                  <div>
+
+                    <span>
+                      Crop
+                    </span>
+
+                    <strong>
+                      {land.crop ||
+                        land.cropType ||
+                        "Not Specified"}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+                <div className="land-info-row">
+
+                  <Globe2 size={18} />
+
+                  <div>
+
+                    <span>
+                      Coordinates
+                    </span>
+
+                    <strong>
+
+                      {land.latitude &&
+                      land.longitude
+                        ? `${land.latitude}, ${land.longitude}`
+                        : "Not available"}
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <button
+                className="location-view-button"
+                onClick={
+                  handleViewLocation
+                }
+              >
+                <Eye size={15} />
+                View Land Location
               </button>
 
             </div>
 
+            {/* =================================================
+                QUICK ACTIONS
+            ================================================= */}
 
-            <div className="alert-list">
+            <div className="dashboard-card quick-actions-card">
 
-              <div className="alert-item">
+              <div className="side-card-title">
 
-                <div className="alert-icon danger">
-                  ⚠️
-                </div>
-
-                <div>
-                  <strong>Low Soil Moisture</strong>
-                  <span>Field 1</span>
-                </div>
-
-                <small>10 min ago</small>
+                <h2>
+                  Quick Actions
+                </h2>
 
               </div>
 
+              <div className="quick-actions-grid">
 
-              <div className="alert-item">
+                <button
+                  className="quick-action green"
+                  onClick={() =>
+                    goTo("/land-details")
+                  }
+                >
 
-                <div className="alert-icon warning">
-                  ⚠️
-                </div>
+                  <Map size={19} />
 
-                <div>
-                  <strong>High Temperature</strong>
-                  <span>Field 2</span>
-                </div>
+                  <span>
+                    View Land Details
+                  </span>
 
-                <small>30 min ago</small>
-
-              </div>
-
-
-              <div className="alert-item">
-
-                <div className="alert-icon normal">
-                  ☁️
-                </div>
-
-                <div>
-                  <strong>Rain Expected</strong>
-                  <span>Tomorrow</span>
-                </div>
-
-                <small>2 hr ago</small>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* CROP HEALTH */}
-          <div className="dashboard-card crop-health-card">
-
-            <div className="card-heading">
-
-              <h2>Crop Health Summary</h2>
-
-            </div>
-
-            <div className="health-content">
-
-              <div className="health-circle">
-
-                <strong>82%</strong>
-
-                <span>Good</span>
-
-              </div>
-
-              <div className="health-chart">
-
-                <div className="chart-line">
-                  ╱╲___╱╲____╱╲
-                </div>
-
-                <div className="chart-labels">
-                  <span>19 May</span>
-                  <span>20 May</span>
-                  <span>21 May</span>
-                  <span>22 May</span>
-                  <span>23 May</span>
-                  <span>24 May</span>
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* UPCOMING TASKS */}
-          <div className="dashboard-card tasks-card">
-
-            <div className="card-heading">
-
-              <h2>Upcoming Tasks</h2>
-
-              <button className="view-all">
-                View all
-              </button>
-
-            </div>
-
-
-            <div className="task-list">
-
-              <div className="task-item">
-
-                <div className="task-icon">
-                  💧
-                </div>
-
-                <div>
-                  <strong>Irrigation</strong>
-                  <span>Field 3</span>
-                </div>
-
-                <small>Today</small>
-
-              </div>
-
-
-              <div className="task-item">
-
-                <div className="task-icon">
-                  🌱
-                </div>
-
-                <div>
-                  <strong>Fertilizer</strong>
-                  <span>Field 1</span>
-                </div>
-
-                <small>Tomorrow</small>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* REGISTERED FARM DASHBOARD */}
-          <div className="registered-farm-card">
-
-            <div className="registered-heading">
-
-              <h2>
-                Registered Farm Dashboard
-              </h2>
-
-              <p>
-                Overview of your farm
-              </p>
-
-            </div>
-
-
-            <div className="farm-feature-grid">
-
-
-              {/* SENSOR MONITORING */}
-
-              <div
-                className="farm-feature"
-                onClick={() =>
-                  alert("Sensor Monitoring")
-                }
-              >
-
-                <div className="farm-feature-icon">
-                  🌱
-                </div>
-
-                <h3>
-                  Sensor Monitoring
-                </h3>
-
-                <p>
-                  Real-time monitoring of soil and environment.
-                </p>
-
-                <button>
-                  View Details
                 </button>
 
-              </div>
+                <button
+                  className="quick-action blue"
+                  onClick={() =>
+                    goTo("/sensor-data")
+                  }
+                >
 
+                  <Radio size={19} />
 
-              {/* DISEASE DETECTION */}
+                  <span>
+                    Check Sensor Data
+                  </span>
 
-              <div
-                className="farm-feature"
-                onClick={() =>
-                  alert("Disease Detection")
-                }
-              >
-
-                <div className="farm-feature-icon">
-                  🩺
-                </div>
-
-                <h3>
-                  Disease Detection
-                </h3>
-
-                <p>
-                  Detect plant diseases using AI technology.
-                </p>
-
-                <button>
-                  Check Now
                 </button>
 
-              </div>
+                <button
+                  className="quick-action purple"
+                  onClick={() =>
+                    goTo("/ai-assistant")
+                  }
+                >
 
+                  <Sparkles size={19} />
 
-              {/* WEATHER */}
+                  <span>
+                    Open AI Assistant
+                  </span>
 
-              <div
-                className="farm-feature"
-                onClick={() =>
-                  alert("Weather")
-                }
-              >
-
-                <div className="farm-feature-icon">
-                  ☁️
-                </div>
-
-                <h3>
-                  Weather
-                </h3>
-
-                <p>
-                  Current weather and forecast information.
-                </p>
-
-                <button>
-                  View Summary
                 </button>
 
-              </div>
+                <button
+                  className="quick-action orange"
+                  onClick={
+                    generateReport
+                  }
+                >
 
+                  <FileText size={19} />
 
-              {/* MARKET PRICE */}
+                  <span>
+                    Generate Report
+                  </span>
 
-              <div
-                className="farm-feature"
-                onClick={() =>
-                  alert("Market Prices")
-                }
-              >
-
-                <div className="farm-feature-icon">
-                  📊
-                </div>
-
-                <h3>
-                  Market Price
-                </h3>
-
-                <p>
-                  Latest market prices and opportunities.
-                </p>
-
-                <button>
-                  View Prices
                 </button>
 
               </div>
 
             </div>
 
+            {/* =================================================
+                RECENT ACTIVITY
+            ================================================= */}
 
-            {/* LAND SUMMARY */}
+            <div className="dashboard-card activity-card">
 
-            <div className="land-summary">
+              <div className="side-card-title">
 
-              <h3>
-                Your Land Summary
-              </h3>
+                <h2>
+                  Recent Activity
+                </h2>
 
-              <div className="summary-stat-grid">
+                <button>
+                  View All
+                </button>
 
-                <div>
-                  <strong>3</strong>
-                  <span>Total Lands</span>
+              </div>
+
+              <div className="activity-list">
+
+                <div className="activity-item">
+
+                  <div className="activity-icon green">
+                    <Radio size={17} />
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      Sensor data updated
+                    </strong>
+
+                    <span>
+                      07 Sep 2025, 10:25 AM
+                    </span>
+
+                  </div>
+
                 </div>
 
-                <div>
-                  <strong>12.50</strong>
-                  <span>Total Area (Acres)</span>
+                <div className="activity-item">
+
+                  <div className="activity-icon blue">
+                    <FileText size={17} />
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      Land registration verified
+                    </strong>
+
+                    <span>
+                      06 Sep 2025, 04:12 PM
+                    </span>
+
+                  </div>
+
                 </div>
 
-                <div>
-                  <strong>2</strong>
-                  <span>Active Crops</span>
-                </div>
+                <div className="activity-item">
 
-                <div>
-                  <strong>Today</strong>
-                  <span>Last Updated</span>
+                  <div className="activity-icon orange">
+                    <Bell size={17} />
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      New notification
+                    </strong>
+
+                    <span>
+                      06 Sep 2025, 11:30 AM
+                    </span>
+
+                  </div>
+
                 </div>
 
               </div>
@@ -714,8 +1108,6 @@ function LandDashboard() {
           </div>
 
         </section>
-          </div>
-        )}
 
       </main>
 

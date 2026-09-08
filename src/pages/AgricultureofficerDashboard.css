@@ -1,0 +1,699 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f8f7;
+}
+
+/* ================= MAIN ================= */
+
+.officer-dashboard {
+  min-height: 100vh;
+  display: flex;
+  background: #f5f8f7;
+}
+
+/* ================= SIDEBAR ================= */
+
+.officer-sidebar {
+  width: 153px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #06473b, #075b4d);
+  color: white;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.officer-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 7px 20px;
+}
+
+.officer-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #c5f0d7;
+  color: #09875f;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.officer-brand h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.officer-brand p {
+  font-size: 6px;
+  margin: 3px 0 0;
+  white-space: nowrap;
+  color: #c8ddd8;
+}
+
+.officer-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.officer-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 7px;
+  border-radius: 6px;
+  font-size: 9px;
+  color: #e2efeb;
+  cursor: pointer;
+}
+
+.officer-menu-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.officer-menu-item.active {
+  background: #09966c;
+  color: white;
+}
+
+.officer-logout {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 7px;
+  font-size: 9px;
+  color: #e0efeb;
+}
+
+/* ================= MAIN CONTENT ================= */
+
+.officer-main {
+  margin-left: 153px;
+  width: calc(100% - 153px);
+  padding: 15px 12px;
+}
+
+/* ================= HEADER ================= */
+
+.officer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 13px;
+}
+
+.officer-header h1 {
+  margin: 0;
+  font-size: 17px;
+  color: #132f38;
+}
+
+.officer-header p {
+  margin: 4px 0 0;
+  font-size: 8px;
+  color: #687b80;
+}
+
+.officer-header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.officer-notification {
+  position: relative;
+  color: #53696e;
+}
+
+.officer-notification span {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ed5555;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+}
+
+.officer-profile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  padding: 5px 8px;
+  border: 1px solid #e0e7e5;
+  border-radius: 7px;
+}
+
+.officer-avatar {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #e2e9e9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #53696e;
+}
+
+.officer-profile-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.officer-profile-info strong {
+  font-size: 8px;
+  color: #233c43;
+}
+
+.officer-profile-info small {
+  font-size: 6px;
+  color: #7c898c;
+}
+
+/* ================= STATISTICS ================= */
+
+.officer-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.officer-stat-card {
+  height: 78px;
+  border-radius: 7px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+}
+
+.green-stat {
+  background: #effcf6;
+  border-color: #c6eddf;
+}
+
+.blue-stat {
+  background: #f1f7ff;
+  border-color: #d1e3f5;
+}
+
+.yellow-stat {
+  background: #fffaf0;
+  border-color: #f3e5c5;
+}
+
+.purple-stat {
+  background: #faf5ff;
+  border-color: #e8d9f3;
+}
+
+.officer-stat-icon {
+  width: 35px;
+  height: 35px;
+  min-width: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.green-stat-icon {
+  background: #d4f3e4;
+  color: #079765;
+}
+
+.blue-stat-icon {
+  background: #deedff;
+  color: #356ea9;
+}
+
+.yellow-stat-icon {
+  background: #ffedc9;
+  color: #df9c1d;
+}
+
+.purple-stat-icon {
+  background: #eadcf8;
+  color: #8253a8;
+}
+
+.officer-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.officer-stat-content span {
+  font-size: 8px;
+  color: #566b70;
+}
+
+.officer-stat-content strong {
+  font-size: 17px;
+  color: #18343c;
+  margin-top: 3px;
+}
+
+.officer-stat-content small {
+  font-size: 7px;
+  color: #32936f;
+  margin-top: 3px;
+}
+
+.purple-stat .officer-stat-content small {
+  color: #80688e;
+}
+
+/* ================= CONTENT ================= */
+
+.officer-content-row {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+
+.officer-panel {
+  background: white;
+  border: 1px solid #dfe7e5;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.officer-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 11px 7px;
+}
+
+.officer-panel-header h2 {
+  font-size: 10px;
+  margin: 0;
+  color: #19343c;
+}
+
+.officer-panel-header select {
+  border: 1px solid #e0e6e5;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 7px;
+  color: #51666b;
+  background: white;
+}
+
+.officer-panel-header button {
+  border: 0;
+  background: transparent;
+  color: #168a68;
+  font-size: 7px;
+  font-weight: bold;
+}
+
+/* ================= CROP HEALTH ================= */
+
+.crop-health-panel {
+  min-height: 188px;
+}
+
+.crop-health-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  height: 142px;
+}
+
+.donut-chart {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #14ad72 0deg 280deg,
+    #f1b638 280deg 334deg,
+    #eb5b60 334deg 360deg
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.donut-chart::before {
+  content: "";
+  position: absolute;
+  width: 79px;
+  height: 79px;
+  border-radius: 50%;
+  background: white;
+}
+
+.donut-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.donut-inner strong {
+  font-size: 19px;
+  color: #20504b;
+}
+
+.donut-inner span {
+  font-size: 6px;
+  color: #68817e;
+  margin-top: 2px;
+}
+
+.crop-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 115px;
+}
+
+.crop-legend div {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 5px;
+  font-size: 7px;
+  color: #52676b;
+}
+
+.crop-legend strong {
+  color: #273f45;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.healthy {
+  background: #14ad72;
+}
+
+.moderate {
+  background: #f1b638;
+}
+
+.risk {
+  background: #eb5b60;
+}
+
+/* ================= DISEASE ================= */
+
+.disease-panel {
+  min-height: 188px;
+}
+
+.disease-list {
+  padding: 0 10px 5px;
+}
+
+.disease-item {
+  min-height: 49px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 1px solid #edf1ef;
+}
+
+.disease-item:last-child {
+  border-bottom: none;
+}
+
+.disease-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.red-disease {
+  background: #ffe7e5;
+  color: #e45b58;
+}
+
+.green-disease {
+  background: #e4f5df;
+  color: #65a449;
+}
+
+.yellow-disease {
+  background: #fff1ce;
+  color: #d69b23;
+}
+
+.disease-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.disease-info strong {
+  font-size: 7px;
+  color: #30474d;
+}
+
+.disease-info span {
+  font-size: 6px;
+  color: #7c898c;
+  margin-top: 3px;
+}
+
+.disease-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.disease-right small {
+  font-size: 6px;
+  color: #899496;
+}
+
+.high-badge,
+.medium-badge {
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 6px;
+}
+
+.high-badge {
+  background: #ffe2df;
+  color: #d8504e;
+}
+
+.medium-badge {
+  background: #fff0d2;
+  color: #a87919;
+}
+
+/* ================= SOIL ================= */
+
+.second-row {
+  align-items: stretch;
+}
+
+.soil-panel {
+  min-height: 119px;
+}
+
+.soil-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  padding: 3px 9px 9px;
+}
+
+.soil-item {
+  border: 1px solid #e6ecea;
+  border-radius: 6px;
+  min-height: 77px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.soil-item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.temperature {
+  background: #fff0ef;
+  color: #e85a5a;
+}
+
+.humidity {
+  background: #e9f4ff;
+  color: #397fbe;
+}
+
+.ph {
+  background: #f5ebff;
+  color: #8d61b2;
+}
+
+.moisture {
+  background: #e7f6ef;
+  color: #4e9a72;
+}
+
+.soil-item span {
+  font-size: 6px;
+  color: #748387;
+}
+
+.soil-item strong {
+  font-size: 10px;
+  color: #233e45;
+  margin-top: 4px;
+}
+
+/* ================= QUICK ACTIONS ================= */
+
+.quick-panel {
+  min-height: 119px;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  padding: 3px 9px 9px;
+}
+
+.quick-action {
+  height: 39px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  font-size: 7px;
+  cursor: pointer;
+  background: white;
+}
+
+.green-action {
+  border: 1px solid #ccebdd;
+  background: #f1fcf7;
+  color: #147f61;
+}
+
+.blue-action {
+  border: 1px solid #cde5ef;
+  background: #f2faff;
+  color: #267596;
+}
+
+.quick-action:hover {
+  transform: translateY(-1px);
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 900px) {
+
+  .officer-sidebar {
+    width: 140px;
+  }
+
+  .officer-main {
+    margin-left: 140px;
+    width: calc(100% - 140px);
+  }
+
+  .officer-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .officer-content-row {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .officer-sidebar {
+    width: 60px;
+  }
+
+  .officer-brand > div:last-child,
+  .officer-menu-item span,
+  .officer-logout span {
+    display: none;
+  }
+
+  .officer-brand {
+    justify-content: center;
+  }
+
+  .officer-menu-item,
+  .officer-logout {
+    justify-content: center;
+  }
+
+  .officer-main {
+    margin-left: 60px;
+    width: calc(100% - 60px);
+  }
+
+  .officer-header h1 {
+    font-size: 14px;
+  }
+
+  .officer-header p {
+    font-size: 7px;
+  }
+
+  .officer-profile-info,
+  .officer-profile > svg {
+    display: none;
+  }
+
+  .officer-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .soil-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+}
