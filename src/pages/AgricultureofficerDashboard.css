@@ -7,36 +7,36 @@
 }
 
 :root {
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Arial,
-    sans-serif;
+  --od-green-950: #0d2818;
+  --od-green-900: #123c25;
+  --od-green-800: #1a4d2e;
+  --od-green-700: #1f6b3a;
+  --od-green-600: #2d8a4e;
+  --od-green-500: #3aa05c;
+  --od-green-100: #e8f5eb;
+  --od-green-50: #f3faf5;
+  --od-bg: #f0f3f1;
+  --od-card: #ffffff;
+  --od-text: #1a2e22;
+  --od-muted: #6b7c72;
+  --od-border: #e2eae4;
+  --od-shadow: 0 2px 12px rgba(18, 60, 37, 0.06);
 
-  color: #18363a;
-  background: #f4f8f6;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: var(--od-text);
+  background: var(--od-bg);
   font-synthesis: none;
 }
 
 html {
   min-width: 320px;
-  background: #f4f8f6;
+  background: var(--od-bg);
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    radial-gradient(
-      circle at 80% 0%,
-      rgba(28, 152, 111, 0.055),
-      transparent 28%
-    ),
-    #f4f8f6;
+  background: var(--od-bg);
 }
 
 button,
@@ -56,8 +56,12 @@ button {
 
 .officer-dashboard {
   min-height: 100vh;
-  display: flex;
-  background: #f4f8f6;
+  display: block;
+  background: var(--od-bg);
+  color: var(--od-text);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  position: relative;
+  overflow-x: hidden;
 }
 
 
@@ -66,35 +70,44 @@ button {
 ========================================================= */
 
 .officer-sidebar {
-  width: 245px;
+  width: 248px;
   min-height: 100vh;
 
   position: fixed;
   inset: 0 auto 0 0;
 
-  z-index: 10;
+  z-index: 1200;
 
   display: flex;
   flex-direction: column;
 
-  padding: 24px 16px 18px;
+  padding: 22px 16px 18px;
 
-  color: #edf9f5;
+  color: #fff;
 
-  background:
-    radial-gradient(
-      circle at 30% 8%,
-      rgba(99, 207, 155, 0.12),
-      transparent 24%
-    ),
-    linear-gradient(
-      180deg,
-      #063f35 0%,
-      #075c4d 100%
-    );
+  background: linear-gradient(180deg, #0f2f1c 0%, #154229 100%);
 
-  box-shadow:
-    12px 0 35px rgba(12, 54, 45, 0.08);
+  box-shadow: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  transform: translateX(-105%);
+  transition: transform 0.25s ease;
+  overflow-y: auto;
+}
+
+.officer-sidebar.open {
+  transform: translateX(0);
+}
+
+.officer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1100;
+}
+
+.officer-overlay.show {
+  display: block;
 }
 
 
@@ -298,13 +311,14 @@ button {
 ========================================================= */
 
 .officer-main {
-  width: calc(100% - 245px);
-
-  margin-left: 245px;
-
-  padding: 28px 32px 24px;
-
+  width: 100%;
+  margin-left: 0 !important;
+  padding: 0 0 24px;
   min-width: 0;
+  min-height: 100vh;
+  background: var(--od-bg);
+  position: relative;
+  z-index: 1;
 }
 
 
@@ -314,52 +328,63 @@ button {
 
 .officer-header {
   display: flex;
-
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  min-height: 72px;
+  padding: 14px 28px;
+  background: var(--od-card);
+  border-bottom: 1px solid var(--od-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
 
-  gap: 30px;
-
-  padding: 0 2px 24px;
+.officer-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--od-green-50);
+  color: var(--od-green-800);
+  font-size: 18px;
+  cursor: pointer;
 }
 
 .welcome-block {
   min-width: 0;
+  flex: 1;
 }
 
 .eyebrow,
 .panel-eyebrow {
   display: block;
-
-  color: #78918f;
-
+  color: var(--od-muted);
   font-size: 11px;
-  font-weight: 800;
-
-  letter-spacing: 1.2px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .welcome-block h1 {
-  margin: 7px 0 0;
-
-  color: #17383c;
-
-  font-size: 28px;
-  line-height: 1.15;
-
-  letter-spacing: -0.8px;
-}
-
-.welcome-block h1 span {
-  font-size: 23px;
+  margin: 4px 0 0;
+  color: var(--od-text);
+  font-size: clamp(20px, 2.2vw, 26px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 .welcome-block p {
-  margin: 8px 0 0;
-
-  color: #728488;
-
+  margin: 4px 0 0;
+  color: var(--od-muted);
   font-size: 13px;
+  line-height: 1.4;
 }
 
 
@@ -490,99 +515,91 @@ button {
 ========================================================= */
 
 .hero-card {
-  width: 100%;
-  min-height: 285px;
-
+  display: block !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 18px 28px;
+  min-height: 280px;
   position: relative;
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1.1fr)
-    minmax(330px, 0.9fr);
-
   overflow: hidden;
-
-  border: 1px solid #bfe1d1;
-
+  border: 1px solid var(--od-border);
   border-radius: 18px;
-
-  background:
-    radial-gradient(
-      circle at 10% 20%,
-      rgba(255, 255, 255, 0.48),
-      transparent 28%
-    ),
-    linear-gradient(
-      120deg,
-      #dff5e9 0%,
-      #c9ebdc 55%,
-      #b6dfcf 100%
-    );
-
-  box-shadow:
-    0 13px 35px rgba(35, 99, 77, 0.08);
-
-  margin-bottom: 18px;
+  background: #123c25;
+  box-shadow: var(--od-shadow);
+  color: #fff;
+  grid-template-columns: none !important;
+  box-sizing: border-box;
 }
 
+.hero-real-image {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+}
+
+.hero-image-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    rgba(13, 40, 24, 0.82) 0%,
+    rgba(13, 40, 24, 0.4) 55%,
+    rgba(13, 40, 24, 0.18) 100%
+  );
+  pointer-events: none;
+}
 
 /* HERO COPY */
 
 .hero-copy {
-  min-width: 0;
-
   position: relative;
   z-index: 2;
-
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 280px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-
-  padding: 35px 40px;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 28px 30px;
+  box-sizing: border-box;
 }
 
 .hero-kicker {
   display: inline-flex;
-
   align-items: center;
-
   gap: 7px;
-
   width: fit-content;
-
-  color: #168264;
-
+  color: rgba(255, 255, 255, 0.85);
   font-size: 12px;
-  font-weight: 900;
-
-  letter-spacing: 1px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 .hero-copy h2 {
-  max-width: 600px;
-
-  margin: 11px 0 9px;
-
-  color: #123f37;
-
-  font-size: 32px;
-
-  line-height: 1.08;
-
-  letter-spacing: -1.1px;
+  max-width: 640px;
+  margin: 10px 0 8px;
+  color: #fff;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
 }
 
 .hero-copy p {
-  max-width: 600px;
-
+  max-width: 560px;
   margin: 0;
-
-  color: #55766e;
-
-  font-size: 14px;
-
-  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 
@@ -623,127 +640,40 @@ button {
 
 .primary-button {
   color: #ffffff;
-
-  background: #087b5d;
-
-  box-shadow:
-    0 6px 14px rgba(8, 123, 93, 0.2);
+  background: var(--od-green-700);
+  box-shadow: none;
+  border-radius: 12px;
 }
 
 .primary-button:hover {
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 9px 18px rgba(8, 123, 93, 0.25);
+  transform: none;
+  background: var(--od-green-800);
+  box-shadow: none;
 }
 
 .secondary-button {
-  color: #17644f;
-
-  border: 1px solid rgba(25, 116, 90, 0.22);
-
-  background: rgba(255, 255, 255, 0.65);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
 }
 
 .secondary-button:hover {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
 }
 
-
-/* =========================================================
-   HERO IMAGE
-========================================================= */
-
+.image-placeholder,
 .hero-image-slot {
-  min-width: 0;
-  min-height: 285px;
-
-  position: relative;
-
-  overflow: hidden;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(22, 113, 83, 0.16),
-      rgba(7, 72, 55, 0.3)
-    );
+  display: none;
 }
-
-.image-placeholder {
-  position: absolute;
-
-  inset: 0;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  color: #4d8d78;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.12),
-      rgba(27, 116, 88, 0.14)
-    ),
-    repeating-linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.14) 0,
-      rgba(255, 255, 255, 0.14) 1px,
-      transparent 1px,
-      transparent 10px
-    );
-}
-
-.image-placeholder span {
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.image-placeholder small {
-  color: #6e9589;
-
-  font-size: 10px;
-}
-
-.hero-image-overlay {
-  position: absolute;
-
-  inset: 0;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(203, 237, 221, 0.05),
-      rgba(8, 70, 53, 0.16)
-    );
-
-  pointer-events: none;
-}
-
-.hero-real-image {
-  width: 100%;
-  height: 100%;
-
-  display: block;
-
-  object-fit: cover;
-}
-
 
 /* HERO FLOATING CARD */
 
 .hero-floating-card {
   position: absolute;
-
   right: 18px;
   bottom: 18px;
+  z-index: 2;
 
   display: flex;
   align-items: center;
@@ -802,13 +732,9 @@ button {
 
 .officer-stats {
   display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 13px;
-
-  margin-bottom: 18px;
+  margin: 0 28px 18px;
 }
 
 .officer-stat-card {
@@ -946,14 +872,12 @@ button {
 
 .dashboard-grid {
   display: grid;
-
   grid-template-columns:
     minmax(0, 1.25fr)
     minmax(360px, 0.75fr);
-
   gap: 16px;
-
   align-items: stretch;
+  margin: 0 28px 18px;
 }
 
 
@@ -1460,55 +1384,44 @@ button {
 
 .farm-name strong {
   color: #30484d;
-
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 750;
 }
 
 .farm-name span {
   display: flex;
-
   align-items: center;
-
-  gap: 3px;
-
-  margin-top: 4px;
-
-  color: #879496;
-
-  font-size: 10px;
+  gap: 4px;
+  margin-top: 5px;
+  color: #6b7c72;
+  font-size: 13px;
 }
 
 .farm-detail span {
-  color: #9aa5a6;
-
-  font-size: 9px;
+  color: #6b7c72;
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .farm-detail strong {
-  margin-top: 4px;
-
-  color: #42585c;
-
-  font-size: 11px;
+  margin-top: 5px;
+  color: #1a2e22;
+  font-size: 14px;
+  font-weight: 750;
 }
 
 .registration-status {
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
-  gap: 4px;
-
+  gap: 5px;
   width: fit-content;
-
-  padding: 5px 8px;
-
-  border-radius: 12px;
-
-  font-size: 9px;
-
-  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
 }
 
 .registration-status.approved {
@@ -2208,14 +2121,13 @@ button {
 
 @media (max-width: 1200px) {
   .officer-sidebar {
-    width: 220px;
+    width: 248px;
   }
 
   .officer-main {
-    width: calc(100% - 220px);
-    margin-left: 220px;
-
-    padding: 24px;
+    width: 100%;
+    margin-left: 0;
+    padding: 0 0 24px;
   }
 
   .officer-stats {
@@ -2253,15 +2165,13 @@ button {
 
 @media (max-width: 900px) {
   .officer-sidebar {
-    width: 190px;
+    width: 248px;
   }
 
   .officer-main {
-    width: calc(100% - 190px);
-
-    margin-left: 190px;
-
-    padding: 20px;
+    width: 100%;
+    margin-left: 0;
+    padding: 0 0 24px;
   }
 
   .officer-header {
@@ -2273,7 +2183,9 @@ button {
   }
 
   .hero-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: none !important;
+    width: auto !important;
+    max-width: none !important;
   }
 
   .hero-image-slot {
@@ -2307,23 +2219,19 @@ button {
 
 @media (max-width: 650px) {
   .officer-sidebar {
-    width: 68px;
-
-    padding: 15px 8px;
+    width: 248px;
+    padding: 22px 16px 18px;
   }
 
   .officer-main {
-    width: calc(100% - 68px);
-
-    margin-left: 68px;
-
-    padding: 15px 12px;
+    width: 100%;
+    margin-left: 0;
+    padding: 0 0 24px;
   }
 
   .officer-brand {
-    justify-content: center;
-
-    padding: 0 0 25px;
+    justify-content: flex-start;
+    padding: 0 8px 28px;
   }
 
   .officer-brand > div:last-child,
@@ -2331,20 +2239,28 @@ button {
   .officer-menu-item span,
   .officer-logout span,
   .sidebar-footer {
-    display: none;
+    display: flex;
+  }
+
+  .sidebar-label {
+    display: block;
+  }
+
+  .officer-menu-item span,
+  .officer-logout span {
+    display: inline;
   }
 
   .officer-menu-item,
   .officer-logout {
-    justify-content: center;
-
-    padding: 12px 5px;
+    justify-content: flex-start;
+    padding: 11px 12px;
   }
 
   .officer-header {
-    flex-direction: column;
-
-    gap: 15px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 
   .officer-header-right {
@@ -2505,4 +2421,549 @@ button {
   .soil-summary-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* =========================================================
+   FARM DASHBOARD THEME ALIGNMENT
+========================================================= */
+
+.officer-logo {
+  color: #fff;
+  background: linear-gradient(135deg, #3aa05c, #1f6b3a);
+  box-shadow: none;
+  border-radius: 11px;
+}
+
+.officer-brand h2 {
+  font-size: 16px;
+  letter-spacing: -0.3px;
+}
+
+.officer-brand p {
+  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.officer-menu-item.active {
+  background: rgba(58, 160, 92, 0.28);
+  box-shadow: none;
+  border-left: 3px solid #3aa05c;
+}
+
+.officer-main {
+  background: var(--od-bg);
+}
+
+.officer-header {
+  background: var(--od-card);
+  border-bottom: 1px solid var(--od-border);
+}
+
+.welcome-block h1,
+.officer-panel-header h2 {
+  color: var(--od-text);
+}
+
+.welcome-block p,
+.panel-eyebrow,
+.officer-stat-content span {
+  color: var(--od-muted);
+}
+
+.hero-kicker,
+.hero-copy h2,
+.hero-copy p {
+  color: #fff;
+}
+
+.primary-button {
+  background: var(--od-green-700);
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+.primary-button:hover {
+  background: var(--od-green-800);
+  box-shadow: none;
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.officer-panel,
+.officer-stat-card {
+  background: var(--od-card);
+  border: 1px solid var(--od-border);
+  border-radius: 16px;
+  box-shadow: var(--od-shadow);
+}
+
+.green-stat,
+.blue-stat,
+.yellow-stat,
+.purple-stat {
+  background: var(--od-card);
+  border-color: var(--od-border);
+}
+
+.green-stat-icon,
+.blue-stat-icon,
+.yellow-stat-icon,
+.purple-stat-icon {
+  color: var(--od-green-700);
+  background: var(--od-green-100);
+}
+
+.soil-item {
+  border-color: var(--od-border);
+  background: var(--od-green-50);
+  border-radius: 12px;
+}
+
+.soil-item-icon.temperature,
+.soil-item-icon.humidity,
+.soil-item-icon.ph,
+.soil-item-icon.moisture {
+  color: var(--od-green-700);
+  background: var(--od-green-100);
+}
+
+.location-chip {
+  color: var(--od-green-700);
+  background: var(--od-green-50);
+  border: 1px solid var(--od-border);
+}
+
+.notification-button {
+  background: var(--od-green-50);
+  color: var(--od-green-800);
+  border: 1px solid var(--od-border);
+}
+
+.officer-avatar {
+  background: linear-gradient(135deg, #3aa05c, #1f6b3a);
+  color: #fff;
+}
+
+/* Demo sensor strip — farmer-dashboard style */
+.officer-sensor-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 28px 0;
+  padding: 12px 14px;
+  background: var(--od-card);
+  border: 1px solid var(--od-border);
+  border-radius: 14px;
+  box-shadow: var(--od-shadow);
+}
+
+.officer-avatar {
+  background: linear-gradient(135deg, #3aa05c, #1f6b3a);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.officer-profile-info strong {
+  color: var(--od-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.officer-profile-info small {
+  color: var(--od-muted);
+  font-size: 11px;
+}
+
+@media (max-width: 1100px), (max-width: 900px), (max-width: 650px) {
+  .officer-sidebar {
+    width: 248px !important;
+    padding: 22px 16px 18px !important;
+    transform: translateX(-105%);
+  }
+
+  .officer-sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .officer-main {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .officer-brand > div:last-child {
+    display: block;
+  }
+
+  .sidebar-label {
+    display: block;
+  }
+
+  .officer-menu-item span,
+  .officer-logout span {
+    display: inline;
+  }
+
+  .sidebar-footer {
+    display: flex;
+  }
+
+  .officer-menu-item,
+  .officer-logout {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .officer-sensor-meta {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .hero-card,
+  .officer-sensor-strip,
+  .officer-stats,
+  .dashboard-grid {
+    width: auto !important;
+    max-width: none !important;
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .officer-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .hero-floating-card {
+    display: none;
+  }
+}
+
+.officer-sensor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--od-green-50);
+  border: 1px solid var(--od-border);
+  color: var(--od-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.officer-sensor-pill.live {
+  background: #e8f5eb;
+  color: var(--od-green-800);
+  border-color: #c6e2cf;
+}
+
+.officer-sensor-pill.demo {
+  background: #fff8eb;
+  color: #9a6700;
+  border-color: #f0e0b2;
+}
+
+.officer-sensor-meta {
+  margin-left: auto;
+  color: var(--od-muted);
+  font-size: 12px;
+}
+
+.soil-demo-note {
+  margin: 0 17px 12px;
+  color: var(--od-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .officer-sensor-meta {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Force hero full width — left to right */
+.officer-main > .hero-card {
+  display: block !important;
+  width: auto !important;
+  max-width: none !important;
+  margin-left: 28px !important;
+  margin-right: 28px !important;
+  grid-template-columns: none !important;
+}
+
+.officer-main > .hero-card .hero-real-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+@media (max-width: 720px) {
+  .officer-main > .hero-card {
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+}
+
+.officer-report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(10, 24, 16, 0.48);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.officer-report-modal {
+  width: min(560px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--od-border);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.officer-report-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.officer-report-head h3 {
+  margin: 4px 0 6px;
+  font-size: 18px;
+  color: var(--od-text);
+}
+
+.officer-report-head p {
+  margin: 0;
+  color: var(--od-muted);
+  font-size: 13px;
+}
+
+.officer-report-close {
+  border: 1px solid var(--od-border);
+  background: var(--od-green-50);
+  color: var(--od-text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.officer-report-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.officer-report-summary > div {
+  background: var(--od-green-50);
+  border: 1px solid var(--od-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.officer-report-summary span {
+  display: block;
+  color: var(--od-muted);
+  font-size: 12px;
+}
+
+.officer-report-summary strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 20px;
+  color: var(--od-text);
+}
+
+.officer-report-body {
+  display: grid;
+  gap: 8px;
+  color: var(--od-text);
+  font-size: 14px;
+}
+
+.officer-report-body p {
+  margin: 0;
+}
+
+.officer-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.officer-report-actions .report-print-btn {
+  color: var(--od-green-800);
+  background: #fff;
+  border: 1px solid var(--od-border);
+}
+
+@media (max-width: 640px) {
+  .officer-report-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* =========================================================
+   READABLE TYPOGRAPHY PASS
+========================================================= */
+
+.officer-panel,
+.officer-stats {
+  scroll-margin-top: 88px;
+}
+
+.officer-panel-header h2 {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.panel-eyebrow,
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.officer-stat-content span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.officer-stat-content strong {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.officer-stat-content small,
+.officer-stat-content b {
+  font-size: 12px;
+}
+
+.officer-panel-header select,
+.officer-panel-header button {
+  font-size: 13px;
+}
+
+.disease-info strong,
+.registration-farmer strong,
+.farm-name strong,
+.detection-item strong,
+.health-summary-main strong {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.disease-info span,
+.registration-farmer span,
+.farm-name span,
+.farm-detail span,
+.detection-item span,
+.crop-legend span,
+.soil-item span {
+  font-size: 13px;
+}
+
+.soil-item strong {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.search-box input,
+.filter-button,
+.location-chip {
+  font-size: 13px;
+}
+
+.registration-col-label,
+.registration-meta,
+.registration-headers,
+.reg-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.registration-row {
+  min-height: 78px;
+  font-size: 14px;
+}
+
+.registration-row strong {
+  font-size: 15px;
+}
+
+.status-badge,
+.high-badge,
+.medium-badge,
+.approved-badge,
+.pending-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+}
+
+.hero-copy h2 {
+  font-size: clamp(24px, 3vw, 32px);
+}
+
+.hero-copy p {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.hero-kicker {
+  font-size: 12px;
+}
+
+.primary-button,
+.secondary-button {
+  font-size: 14px;
+  min-height: 44px;
+}
+
+.officer-sensor-pill {
+  font-size: 13px;
+}
+
+.officer-sensor-meta,
+.dashboard-footer {
+  font-size: 13px;
+}
+
+.donut-inner strong {
+  font-size: 22px;
+}
+
+.donut-inner span {
+  font-size: 12px;
+}
+
+.quick-action {
+  font-size: 14px;
+}
+
+.fd-selected-field-note,
+.crop-health-summary p,
+.wildlife-side span {
+  font-size: 13px;
 }

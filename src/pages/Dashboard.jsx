@@ -49,8 +49,8 @@ const roleConfig = [
     name: "Rented",
     description: "Land registration and land monitoring",
     icon: LandPlot,
-    registration: "/rented-registration",
-    dashboard: "/rented-dashboard",
+    registration: "/land-registration",
+    dashboard: "/land-dashboard",
     className: "earth",
     parentCategory: "cultivated-land",
   },
@@ -310,6 +310,25 @@ function Dashboard() {
           normalizedProfiles
         );
 
+        // Keep farmer registered when local multi-fields still exist
+        try {
+          const farmerFieldsRaw = localStorage.getItem(
+            "agrisenseFarmerFields"
+          );
+          if (farmerFieldsRaw) {
+            const farmerBundle = JSON.parse(farmerFieldsRaw);
+            if (
+              String(farmerBundle?.userId) === String(userId) &&
+              Array.isArray(farmerBundle.fields) &&
+              farmerBundle.fields.length > 0
+            ) {
+              normalizedProfiles.farmer = true;
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+
         setProfiles(normalizedProfiles);
 
         localStorage.setItem(
@@ -364,6 +383,23 @@ function Dashboard() {
       ) {
         normalizedLocalProfiles.officer = true;
         normalizedLocalProfiles.agriculture_officer = true;
+      }
+
+      try {
+        const farmerFieldsRaw = localStorage.getItem(
+          "agrisenseFarmerFields"
+        );
+        if (farmerFieldsRaw) {
+          const farmerBundle = JSON.parse(farmerFieldsRaw);
+          if (
+            Array.isArray(farmerBundle.fields) &&
+            farmerBundle.fields.length > 0
+          ) {
+            normalizedLocalProfiles.farmer = true;
+          }
+        }
+      } catch {
+        /* ignore */
       }
 
       setProfiles(normalizedLocalProfiles);
@@ -705,7 +741,9 @@ function Dashboard() {
                             )
                           }
                         >
-                          Open dashboard
+                          {role.id === "farmer"
+                            ? "Go to dashboard"
+                            : "Open dashboard"}
                           <ArrowRight size={17} />
                         </button>
 
@@ -1045,7 +1083,9 @@ function Dashboard() {
                                 )
                               }
                             >
-                              Open dashboard
+                              {subRole.id === "farmer"
+                                ? "Go to dashboard"
+                                : "Open dashboard"}
                               <ArrowRight
                                 size={16}
                               />

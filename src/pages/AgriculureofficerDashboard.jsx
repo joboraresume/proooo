@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -11,7 +11,6 @@ import {
   Settings,
   LogOut,
   Bell,
-  ChevronDown,
   UsersRound,
   BookOpen,
   Leaf,
@@ -26,24 +25,187 @@ import {
   ArrowUpRight,
   MoreHorizontal,
   Search,
-  Plus,
   MapPin,
   CalendarDays,
   CheckCircle2,
   Clock3,
+  CloudSun,
+  Waves,
   ImagePlus,
 } from "lucide-react";
 
 import "./AgricultureofficerDashboard.css";
 
+/** Demo sensor values — replace when real sensors are connected */
+const DEMO_SENSORS = {
+  connected: true,
+  source: "Demo field sensors",
+  temperature: "28.4°C",
+  humidity: "71%",
+  soilPh: "6.7",
+  moisture: "62%",
+  updatedAt: "Just now",
+};
+
 const navItems = [
-  { label: "Dashboard", icon: Home },
-  { label: "Land Registration", icon: Map },
-  { label: "Farmers", icon: Users },
-  { label: "Reports", icon: FileText },
-  { label: "Disease Monitoring", icon: Activity },
-  { label: "Soil & Crop Analysis", icon: Sprout },
+  { label: "Dashboard", icon: Home, sectionId: "officer-top" },
+  { label: "Farmers", icon: Users, sectionId: "officer-farmers" },
+  { label: "Reports", icon: FileText, action: "generate-report" },
+  { label: "Disease Monitoring", icon: Activity, sectionId: "officer-disease" },
+  { label: "Soil & Crop Analysis", icon: Sprout, sectionId: "officer-soil" },
 ];
+
+const diseaseAlerts = [
+  {
+    name: "Rice Leaf Blast",
+    severity: "High",
+    location: "Field 3 - Kottarakkara",
+    reported: "2 days ago",
+  },
+  {
+    name: "Tomato Early Blight",
+    severity: "Medium",
+    location: "Field 7 - Chengannur",
+    reported: "3 days ago",
+  },
+];
+
+function buildOfficerReport({ officerName, department, sensors }) {
+  const generatedAt = new Date().toLocaleString();
+  const pendingCount = registrations.filter((r) => r.status === "Pending").length;
+  const approvedCount = registrations.filter((r) => r.status === "Approved").length;
+
+  return {
+    title: "AgriSense Agriculture Officer Report",
+    generatedAt,
+    officerName,
+    department,
+    summary: {
+      totalFarmers: 248,
+      registeredLands: 186,
+      activeFields: 142,
+      issuesReported: 7,
+      cropHealthyPercent: 78,
+      pendingRegistrations: pendingCount,
+      approvedRegistrations: approvedCount,
+    },
+    sensors,
+    registrations,
+    diseaseAlerts,
+    wildlifeDetections,
+  };
+}
+
+function reportToHtml(report) {
+  const rows = report.registrations
+    .map(
+      (farm) => `
+      <tr>
+        <td>${farm.farmer}</td>
+        <td>${farm.location}</td>
+        <td>${farm.crop}</td>
+        <td>${farm.area}</td>
+        <td>${farm.status}</td>
+      </tr>`
+    )
+    .join("");
+
+  const diseases = report.diseaseAlerts
+    .map(
+      (item) => `
+      <li>
+        <strong>${item.name}</strong> (${item.severity}) —
+        ${item.location} · ${item.reported}
+      </li>`
+    )
+    .join("");
+
+  const wildlife = report.wildlifeDetections
+    .map(
+      (item) => `
+      <li>
+        <strong>${item.name}</strong> — ${item.confidence} · ${item.time}
+      </li>`
+    )
+    .join("");
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${report.title}</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; color: #1a2e22; padding: 32px; line-height: 1.45; }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    h2 { margin: 28px 0 10px; font-size: 16px; color: #1f6b3a; }
+    .meta { color: #6b7c72; font-size: 13px; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .card { border: 1px solid #e2eae4; border-radius: 12px; padding: 14px; background: #f3faf5; }
+    .card span { display: block; color: #6b7c72; font-size: 12px; }
+    .card strong { display: block; margin-top: 6px; font-size: 22px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e2eae4; padding: 10px; text-align: left; font-size: 13px; }
+    th { background: #e8f5eb; }
+    ul { margin: 0; padding-left: 18px; }
+    .note { margin-top: 28px; font-size: 12px; color: #6b7c72; }
+  </style>
+</head>
+<body>
+  <h1>${report.title}</h1>
+  <div class="meta">
+    Generated: ${report.generatedAt}<br/>
+    Officer: ${report.officerName}<br/>
+    Department: ${report.department}
+  </div>
+
+  <h2>Summary</h2>
+  <div class="grid">
+    <div class="card"><span>Total Farmers</span><strong>${report.summary.totalFarmers}</strong></div>
+    <div class="card"><span>Registered Lands</span><strong>${report.summary.registeredLands}</strong></div>
+    <div class="card"><span>Active Fields</span><strong>${report.summary.activeFields}</strong></div>
+    <div class="card"><span>Issues Reported</span><strong>${report.summary.issuesReported}</strong></div>
+  </div>
+
+  <h2>Crop Health</h2>
+  <p>Healthy fields: <strong>${report.summary.cropHealthyPercent}%</strong></p>
+  <p>Approved registrations: ${report.summary.approvedRegistrations} · Pending: ${report.summary.pendingRegistrations}</p>
+
+  <h2>Demo Sensor Readings</h2>
+  <p>
+    Temperature ${report.sensors.temperature} ·
+    Moisture ${report.sensors.moisture} ·
+    Humidity ${report.sensors.humidity} ·
+    Soil pH ${report.sensors.soilPh}
+  </p>
+  <p class="meta">${report.sensors.source} · Updated ${report.sensors.updatedAt}</p>
+
+  <h2>Recent Farm Registrations</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Farmer</th>
+        <th>Location</th>
+        <th>Crop</th>
+        <th>Area</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <h2>Disease Alerts</h2>
+  <ul>${diseases}</ul>
+
+  <h2>Wildlife Detections</h2>
+  <ul>${wildlife}</ul>
+
+  <p class="note">
+    This is a generated AgriSense officer report. Demo sensor values will be replaced
+    when live field sensors are connected.
+  </p>
+</body>
+</html>`;
+}
 
 const registrations = [
   {
@@ -87,59 +249,244 @@ const wildlifeDetections = [
   },
 ];
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getInitials(name) {
+  return (
+    String(name || "AO")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "AO"
+  );
+}
+
 const AgricultureOfficerDashboard = () => {
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("Dashboard");
   const [notifications, setNotifications] = useState(3);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [officerProfile, setOfficerProfile] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState(null);
 
-  const handleNavClick = (label) => {
-    setActiveNav(label);
-    // Add navigation logic based on the selected menu item
-    switch(label) {
-      case "Dashboard":
-        // Already on dashboard
-        break;
-      case "Land Registration":
-        navigate("/landowner-registration");
-        break;
-      case "Farmers":
-        navigate("/farmer-registration");
-        break;
-      case "Reports":
-        // Navigate to reports page if exists
-        break;
-      case "Disease Monitoring":
-        // Navigate to disease monitoring page if exists
-        break;
-      case "Soil & Crop Analysis":
-        // Navigate to soil analysis page if exists
-        break;
-      case "Settings":
-        // Navigate to settings page if exists
-        break;
-      default:
-        break;
+  useEffect(() => {
+    try {
+      const savedUser = JSON.parse(
+        localStorage.getItem("agrisenseUser") || "null"
+      );
+      if (!savedUser) {
+        navigate("/login");
+        return;
+      }
+      setUser(savedUser);
+
+      const savedOfficer = JSON.parse(
+        localStorage.getItem("agrisenseOfficer") || "null"
+      );
+      setOfficerProfile(savedOfficer);
+    } catch {
+      navigate("/login");
     }
+  }, [navigate]);
+
+  const displayName = useMemo(() => {
+    return (
+      officerProfile?.full_name ||
+      officerProfile?.fullName ||
+      user?.name ||
+      user?.full_name ||
+      user?.fullName ||
+      "Agriculture Officer"
+    );
+  }, [officerProfile, user]);
+
+  const firstName = useMemo(
+    () => String(displayName).split(" ").filter(Boolean)[0] || "Officer",
+    [displayName]
+  );
+
+  const scrollToSection = (sectionId) => {
+    if (!sectionId) return;
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const generateReport = () => {
+    const report = buildOfficerReport({
+      officerName: displayName,
+      department:
+        officerProfile?.department ||
+        officerProfile?.designation ||
+        "Agriculture Department",
+      sensors: DEMO_SENSORS,
+    });
+    setGeneratedReport(report);
+    setShowReportModal(true);
+    setActiveNav("Reports");
+    setMobileOpen(false);
+  };
+
+  const downloadReport = () => {
+    if (!generatedReport) return;
+    const html = reportToHtml(generatedReport);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `agrisense-officer-report-${stamp}.html`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const printReport = () => {
+    if (!generatedReport) return;
+    const html = reportToHtml(generatedReport);
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) {
+      alert("Please allow pop-ups to print the report.");
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    window.setTimeout(() => printWindow.print(), 300);
+  };
+
+  const handleNavClick = (label, sectionId, action) => {
+    setActiveNav(label);
+    setMobileOpen(false);
+
+    if (action === "generate-report" || label === "Reports") {
+      generateReport();
+      return;
+    }
+
+    window.setTimeout(() => scrollToSection(sectionId), 50);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("agrisenseUser");
+    localStorage.removeItem("agrisenseRole");
+    navigate("/login");
   };
 
   return (
     <div className="officer-dashboard">
+      {showReportModal && generatedReport && (
+        <div
+          className="officer-report-overlay"
+          onClick={() => setShowReportModal(false)}
+        >
+          <div
+            className="officer-report-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="officer-report-title"
+          >
+            <div className="officer-report-head">
+              <div>
+                <span className="panel-eyebrow">GENERATED REPORT</span>
+                <h3 id="officer-report-title">{generatedReport.title}</h3>
+                <p>
+                  {generatedReport.generatedAt} · {generatedReport.officerName}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="officer-report-close"
+                onClick={() => setShowReportModal(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="officer-report-summary">
+              <div>
+                <span>Farmers</span>
+                <strong>{generatedReport.summary.totalFarmers}</strong>
+              </div>
+              <div>
+                <span>Lands</span>
+                <strong>{generatedReport.summary.registeredLands}</strong>
+              </div>
+              <div>
+                <span>Active fields</span>
+                <strong>{generatedReport.summary.activeFields}</strong>
+              </div>
+              <div>
+                <span>Issues</span>
+                <strong>{generatedReport.summary.issuesReported}</strong>
+              </div>
+            </div>
+
+            <div className="officer-report-body">
+              <p>
+                Crop health: <strong>{generatedReport.summary.cropHealthyPercent}%</strong> healthy
+              </p>
+              <p>
+                Sensors (demo): {generatedReport.sensors.temperature},{" "}
+                {generatedReport.sensors.moisture} moisture,{" "}
+                {generatedReport.sensors.humidity} humidity, pH{" "}
+                {generatedReport.sensors.soilPh}
+              </p>
+              <p>
+                Registrations: {generatedReport.summary.approvedRegistrations} approved,{" "}
+                {generatedReport.summary.pendingRegistrations} pending
+              </p>
+              <p>
+                Disease alerts: {generatedReport.diseaseAlerts.length} · Wildlife
+                detections: {generatedReport.wildlifeDetections.length}
+              </p>
+            </div>
+
+            <div className="officer-report-actions">
+              <button type="button" className="primary-button" onClick={downloadReport}>
+                <FileText size={15} />
+                Download Report
+              </button>
+              <button type="button" className="secondary-button report-print-btn" onClick={printReport}>
+                Print / Save PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div
+        className={`officer-overlay ${mobileOpen ? "show" : ""}`}
+        onClick={() => setMobileOpen(false)}
+      />
 
       {/* =====================================================
           SIDEBAR
       ===================================================== */}
 
-      <aside className="officer-sidebar">
+      <aside className={`officer-sidebar ${mobileOpen ? "open" : ""}`}>
 
         <div className="officer-brand">
           <div className="officer-logo">
-            <Leaf size={22} />
+            <Sprout size={22} />
           </div>
 
           <div>
-            <h2>AgriSense</h2>
-            <p>SMART FARMING · BETTER TOMORROW</p>
+            <h2>AgriSense X Pro</h2>
+            <p>Smart Farming for a Better Tomorrow</p>
           </div>
         </div>
 
@@ -148,14 +495,14 @@ const AgricultureOfficerDashboard = () => {
         </div>
 
         <nav className="officer-menu">
-          {navItems.map(({ label, icon: Icon }) => (
+          {navItems.map(({ label, icon: Icon, sectionId, action }) => (
             <button
               key={label}
               type="button"
               className={`officer-menu-item ${
                 activeNav === label ? "active" : ""
               }`}
-              onClick={() => setActiveNav(label)}
+              onClick={() => handleNavClick(label, sectionId, action)}
             >
               <Icon size={17} strokeWidth={1.9} />
               <span>{label}</span>
@@ -169,8 +516,10 @@ const AgricultureOfficerDashboard = () => {
 
         <button
           type="button"
-          className="officer-menu-item"
-          onClick={() => setActiveNav("Settings")}
+          className={`officer-menu-item ${
+            activeNav === "Settings" ? "active" : ""
+          }`}
+          onClick={() => handleNavClick("Settings", "officer-settings")}
         >
           <Settings size={17} strokeWidth={1.9} />
           <span>Settings</span>
@@ -179,10 +528,7 @@ const AgricultureOfficerDashboard = () => {
         <button
           type="button"
           className="officer-logout"
-          onClick={() => {
-            localStorage.removeItem("agrisenseRole");
-            window.location.href = "/login";
-          }}
+          onClick={handleLogout}
         >
           <LogOut size={17} />
           <span>Logout</span>
@@ -209,14 +555,22 @@ const AgricultureOfficerDashboard = () => {
         =================================================== */}
 
         <header className="officer-header">
+          <button
+            type="button"
+            className="officer-menu-btn"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          >
+            ☰
+          </button>
 
           <div className="welcome-block">
             <div className="eyebrow">
-              AGRICULTURE DEPARTMENT
+              AGRICULTURE OFFICER
             </div>
 
             <h1>
-              Good morning, Anitha <span>🌿</span>
+              {getGreeting()}, {firstName}
             </h1>
 
             <p>
@@ -242,28 +596,65 @@ const AgricultureOfficerDashboard = () => {
             <div className="officer-profile">
 
               <div className="officer-avatar">
-                <UsersRound size={18} />
+                {getInitials(displayName)}
               </div>
 
               <div className="officer-profile-info">
-                <strong>Anitha S</strong>
-                <small>Agriculture Officer</small>
+                <strong>{displayName}</strong>
+                <small>
+                  {officerProfile?.designation ||
+                    officerProfile?.department ||
+                    "Agriculture Officer"}
+                </small>
               </div>
-
-              <ChevronDown size={15} />
 
             </div>
           </div>
         </header>
 
+        {/* Demo sensor connection — replace DEMO_SENSORS when hardware is live */}
+        <section className="officer-sensor-strip" aria-label="Sensor status">
+          <span className={`officer-sensor-pill ${DEMO_SENSORS.connected ? "live" : "demo"}`}>
+            <Activity size={13} />
+            {DEMO_SENSORS.connected ? "Sensors connected" : "Sensors offline"}
+          </span>
+          <span className="officer-sensor-pill demo">
+            Demo data
+          </span>
+          <span className="officer-sensor-pill">
+            <Thermometer size={13} />
+            {DEMO_SENSORS.temperature}
+          </span>
+          <span className="officer-sensor-pill">
+            <Droplets size={13} />
+            {DEMO_SENSORS.moisture}
+          </span>
+          <span className="officer-sensor-pill">
+            <CloudSun size={13} />
+            {DEMO_SENSORS.humidity}
+          </span>
+          <span className="officer-sensor-pill">
+            <Waves size={13} />
+            pH {DEMO_SENSORS.soilPh}
+          </span>
+          <span className="officer-sensor-meta">
+            {DEMO_SENSORS.source} · Updated {DEMO_SENSORS.updatedAt}
+          </span>
+        </section>
+
         {/* ===================================================
-            HERO
+            HERO — full-bleed image like farmer dashboard
         =================================================== */}
 
         <section className="hero-card">
+          <img
+            src="/imageag.avif"
+            alt="Farm landscape"
+            className="hero-real-image"
+          />
+          <div className="hero-image-overlay" />
 
           <div className="hero-copy">
-
             <span className="hero-kicker">
               <Sprout size={14} />
               SMART AGRICULTURE COMMAND CENTER
@@ -280,71 +671,36 @@ const AgricultureOfficerDashboard = () => {
             </p>
 
             <div className="hero-actions">
-
               <button
                 type="button"
                 className="primary-button"
+                onClick={generateReport}
               >
-                <Plus size={15} />
-                Register New Farm
+                <FileText size={15} />
+                Review Reports
               </button>
 
               <button
                 type="button"
                 className="secondary-button"
+                onClick={() =>
+                  handleNavClick("Disease Monitoring", "officer-disease")
+                }
               >
-                <Map size={15} />
-                Explore Farm Map
+                <TriangleAlert size={15} />
+                View Alerts
               </button>
-
             </div>
           </div>
 
-          {/* IMAGE AREA */}
-
-          <div className="hero-image-slot">
-
-            {/* 
-              LATER:
-              Replace this placeholder with your uploaded farm image.
-
-              Example:
-              <img
-                src="/farm-hero.jpg"
-                alt="Agricultural farm"
-                className="hero-real-image"
-              />
-            */}
-
-            <div className="image-placeholder">
-
-              <ImagePlus size={28} />
-
-              <span>
-                Farm hero image
-              </span>
-
-              <small>
-                Upload your image later
-              </small>
-
+          <div className="hero-floating-card">
+            <div className="hero-floating-icon">
+              <CheckCircle2 size={16} />
             </div>
-
-            <div className="hero-image-overlay" />
-
-            <div className="hero-floating-card">
-
-              <div className="hero-floating-icon">
-                <CheckCircle2 size={16} />
-              </div>
-
-              <div>
-                <strong>142 active fields</strong>
-                <span>Protected & monitored</span>
-              </div>
-
+            <div>
+              <strong>142 active fields</strong>
+              <span>Protected & monitored</span>
             </div>
-
           </div>
         </section>
 
@@ -352,7 +708,7 @@ const AgricultureOfficerDashboard = () => {
             STATISTICS
         =================================================== */}
 
-        <section className="officer-stats">
+        <section className="officer-stats" id="officer-top">
 
           <div className="officer-stat-card green-stat">
 
@@ -442,7 +798,10 @@ const AgricultureOfficerDashboard = () => {
               CROP HEALTH
           ================================================= */}
 
-          <article className="officer-panel crop-health-panel">
+          <article
+            className="officer-panel crop-health-panel"
+            id="officer-reports"
+          >
 
             <div className="officer-panel-header">
 
@@ -456,19 +815,10 @@ const AgricultureOfficerDashboard = () => {
                 </h2>
               </div>
 
-              <select defaultValue="30">
-                <option value="30">
-                  Last 30 Days
-                </option>
-
-                <option value="7">
-                  Last 7 Days
-                </option>
-
-                <option value="90">
-                  Last 3 Months
-                </option>
-              </select>
+              <button type="button" onClick={generateReport}>
+                Generate Report
+                <FileText size={14} />
+              </button>
 
             </div>
 
@@ -522,7 +872,10 @@ const AgricultureOfficerDashboard = () => {
               DISEASE
           ================================================= */}
 
-          <article className="officer-panel disease-panel">
+          <article
+            className="officer-panel disease-panel"
+            id="officer-disease"
+          >
 
             <div className="officer-panel-header">
 
@@ -638,7 +991,10 @@ const AgricultureOfficerDashboard = () => {
               REGISTRATIONS
           ================================================= */}
 
-          <article className="officer-panel registration-panel">
+          <article
+            className="officer-panel registration-panel"
+            id="officer-farmers"
+          >
 
             <div className="officer-panel-header">
 
@@ -923,13 +1279,13 @@ const AgricultureOfficerDashboard = () => {
               SOIL
           ================================================= */}
 
-          <article className="officer-panel soil-panel">
+          <article className="officer-panel soil-panel" id="officer-soil">
 
             <div className="officer-panel-header">
 
               <div>
                 <span className="panel-eyebrow">
-                  ENVIRONMENT
+                  ENVIRONMENT · DEMO SENSORS
                 </span>
 
                 <h2>
@@ -938,11 +1294,16 @@ const AgricultureOfficerDashboard = () => {
               </div>
 
               <span className="location-chip">
-                <MapPin size={11} />
-                Kerala
+                <Activity size={11} />
+                Live demo feed
               </span>
 
             </div>
+
+            <p className="soil-demo-note">
+              Showing demo sensor readings for now. These values will be replaced
+              when field sensors are connected.
+            </p>
 
             <div className="soil-summary-grid">
 
@@ -953,7 +1314,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Temperature</span>
-                <strong>28.4°C</strong>
+                <strong>{DEMO_SENSORS.temperature}</strong>
 
               </div>
 
@@ -964,7 +1325,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Humidity</span>
-                <strong>71%</strong>
+                <strong>{DEMO_SENSORS.humidity}</strong>
 
               </div>
 
@@ -975,7 +1336,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Soil pH</span>
-                <strong>6.7</strong>
+                <strong>{DEMO_SENSORS.soilPh}</strong>
 
               </div>
 
@@ -986,7 +1347,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Moisture</span>
-                <strong>62%</strong>
+                <strong>{DEMO_SENSORS.moisture}</strong>
 
               </div>
 
@@ -997,7 +1358,7 @@ const AgricultureOfficerDashboard = () => {
               QUICK ACTIONS
           ================================================= */}
 
-          <article className="officer-panel quick-panel">
+          <article className="officer-panel quick-panel" id="officer-settings">
 
             <div className="officer-panel-header">
 
@@ -1027,6 +1388,7 @@ const AgricultureOfficerDashboard = () => {
               <button
                 type="button"
                 className="quick-action green-action"
+                onClick={generateReport}
               >
                 <FileText size={16} />
                 <span>Generate Report</span>
@@ -1036,6 +1398,9 @@ const AgricultureOfficerDashboard = () => {
               <button
                 type="button"
                 className="quick-action blue-action"
+                onClick={() =>
+                  handleNavClick("Disease Monitoring", "officer-disease")
+                }
               >
                 <ShieldAlert size={16} />
                 <span>Check Disease Alerts</span>

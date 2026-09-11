@@ -38,7 +38,7 @@
   flex-direction: column;
   background: linear-gradient(180deg, #0f2f1c 0%, #154229 100%);
   color: #fff;
-  z-index: 100;
+  z-index: 1200;
   overflow-y: auto;
   transform: translateX(-105%);
   transition: transform 0.25s ease;
@@ -288,6 +288,326 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+/* ========== FIELDS MAP ========== */
+
+.fd-fields-panel {
+  background: var(--fd-card);
+  border: 1px solid var(--fd-border);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  box-shadow: var(--fd-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fd-fields-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.fd-secondary-btn {
+  border: 1px solid var(--fd-border);
+  background: #fff;
+  color: var(--fd-text);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.fd-secondary-btn:hover {
+  background: var(--fd-green-50);
+}
+
+.fd-danger-btn {
+  border: 1px solid #b42318;
+  background: #b42318;
+  color: #fff;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.fd-danger-btn:disabled,
+.fd-secondary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(10, 24, 16, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.fd-modal {
+  width: min(440px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  display: grid;
+  gap: 14px;
+}
+
+.fd-modal h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.fd-modal p {
+  margin: 0;
+  color: var(--fd-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.fd-delete-field-list {
+  display: grid;
+  gap: 8px;
+}
+
+.fd-delete-field-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--fd-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.fd-delete-field-item span {
+  display: grid;
+  gap: 2px;
+}
+
+.fd-delete-field-item small {
+  color: var(--fd-muted);
+  font-size: 12px;
+}
+
+.fd-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fd-fields-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fd-fields-head h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.fd-fields-head p {
+  margin: 0;
+  color: var(--fd-muted);
+  font-size: 13px;
+}
+
+.fd-fields-empty {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--fd-green-50);
+  border: 1px dashed var(--fd-border);
+}
+
+.fd-fields-empty p {
+  margin: 0;
+  color: var(--fd-muted);
+  font-size: 14px;
+}
+
+.fd-field-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fd-field-chip {
+  border: 1px solid var(--fd-border);
+  background: #fff;
+  color: var(--fd-text);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.fd-field-chip.active {
+  background: var(--fd-green-600);
+  border-color: var(--fd-green-600);
+  color: #fff;
+}
+
+.fd-fields-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.fd-map-square {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 420px;
+  min-height: 320px;
+}
+
+.fd-map-square .farm-map-multi,
+.fd-map-square .farm-map-empty {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.fd-field-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fd-field-side-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fd-muted);
+}
+
+.fd-field-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fd-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--fd-border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.fd-field-row:hover {
+  border-color: #b7d0be;
+  background: var(--fd-green-50);
+}
+
+.fd-field-row.active {
+  border-color: var(--fd-green-600);
+  background: #e8f5eb;
+}
+
+.fd-field-row-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.fd-field-row-main strong {
+  font-size: 14px;
+  color: var(--fd-text);
+}
+
+.fd-field-row-main small {
+  color: var(--fd-muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fd-field-row-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fd-muted);
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f3f6f4;
+}
+
+.fd-field-row.active .fd-field-row-status {
+  color: #fff;
+  background: var(--fd-green-600);
+}
+
+.farm-map-multi,
+.farm-map-empty {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--fd-border);
+  background: #eef3ef;
+}
+
+.farm-map-multi .leaflet-container {
+  z-index: 0;
+}
+
+.farm-map-empty {
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  color: var(--fd-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.fd-selected-field-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fd-muted);
+}
+
+@media (max-width: 720px) {
+  .fd-fields-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fd-map-square {
+    width: 100%;
+    max-width: none;
+    min-height: 280px;
+    margin: 0;
+  }
 }
 
 /* ========== HERO ========== */
@@ -557,23 +877,33 @@
 }
 
 .fd-capture-preview {
-  flex: 1;
-  min-height: 110px;
-  border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(18, 60, 37, 0.15), rgba(18, 60, 37, 0.45)),
-    url("/public/imagesdisease.jpg")
-      center / cover;
   position: relative;
+  z-index: 0;
+  isolation: isolate;
+  flex: 1;
+  min-height: 150px;
+  max-height: 190px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #dce8df;
+}
+
+.fd-capture-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
 }
 
 .fd-capture-preview .tag {
   position: absolute;
+  z-index: 2;
   bottom: 10px;
   left: 10px;
   padding: 4px 8px;
   border-radius: 6px;
-  background: rgba(45, 138, 78, 0.9);
+  background: rgba(45, 138, 78, 0.92);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -587,7 +917,6 @@
   color: #fff;
   font-size: 13px;
   font-weight: 750;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -601,7 +930,8 @@
 }
 
 .fd-wildlife-card {
-  min-height: 330px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .fd-live-badge {
@@ -618,25 +948,32 @@
 
 .fd-wildlife {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.9fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(200px, 0.9fr);
   gap: 14px;
-  height: 255px;
+  align-items: stretch;
+  min-height: 0;
 }
 
 .fd-wildlife-feed {
-  min-height: 255px;
-  border-radius: 12px;
-  background: #dce8df;
   position: relative;
+  z-index: 0;
+  isolation: isolate;
+  min-height: 220px;
+  max-height: 260px;
+  border-radius: 12px;
+  background: #0f1f16;
   overflow: hidden;
 }
 
 .fd-wildlife-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
   object-position: center;
+  z-index: 0;
 }
 
 .fd-camera-label,
@@ -650,6 +987,8 @@
   padding: 6px 8px;
   font-size: 9px;
   font-weight: 750;
+  max-width: calc(100% - 20px);
+  pointer-events: none;
 }
 
 .fd-camera-label { top: 10px; left: 10px; }
@@ -665,6 +1004,9 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  min-height: 0;
+  max-height: 260px;
+  overflow-y: auto;
 }
 
 .fd-alert-summary {
@@ -978,7 +1320,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 90;
+  z-index: 1100;
 }
 
 .fd-overlay.show {

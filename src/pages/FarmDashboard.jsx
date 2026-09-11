@@ -31,7 +31,68 @@ import {
   Mountain,
 } from "lucide-react";
 
+import { subscribeSensorReadings } from "../services/sensorservice";
+import FarmMap from "../components/FarmMap";
 import "./FarmDashboard.css";
+
+const FARMER_FIELDS_KEY = "agrisenseFarmerFields";
+
+function loadFarmerFieldsBundle(userId) {
+  try {
+    const raw = localStorage.getItem(FARMER_FIELDS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.userId != null && String(parsed.userId) === String(userId)) {
+      return parsed;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function saveFarmerFieldsBundle(bundle) {
+  localStorage.setItem(FARMER_FIELDS_KEY, JSON.stringify(bundle));
+  localStorage.setItem(
+    "agrisenseFarmer",
+    JSON.stringify({
+      full_name: bundle.fullName,
+      address: bundle.address,
+      experience: bundle.experience,
+      fields: bundle.fields,
+    })
+  );
+}
+
+function setFarmerProfileFlag(isRegistered) {
+  try {
+    const profiles = JSON.parse(
+      localStorage.getItem("agrisenseProfiles") || "{}"
+    );
+    const next = {
+      ...(profiles && typeof profiles === "object" ? profiles : {}),
+      farmer: Boolean(isRegistered),
+    };
+    if (!isRegistered) {
+      delete next.farmer;
+    } else {
+      next.farmer = true;
+    }
+    localStorage.setItem("agrisenseProfiles", JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+}
+
+function formatReading(value, suffix = "") {
+  if (value === null || value === undefined || value === "") return "—";
+  const num = Number(value);
+  if (Number.isFinite(num)) {
+    const text = Number.isInteger(num) ? String(num) : num.toFixed(1);
+    return `${text}${suffix}`;
+  }
+  return `${value}${suffix}`;
+}
 
 const API_BASE = (
   import.meta?.env?.VITE_API_BASE_URL || "http://localhost:5000"
@@ -80,6 +141,14 @@ function Sparkline({ color = "#2d8a4e", points = "2,22 12,14 22,18 32,8 42,12 52
 }
 
 function AreaChart({ values }) {
+  if (!values?.length) {
+    return (
+      <div className="fd-area-chart" style={{ display: "grid", placeItems: "center", color: "var(--fd-muted)", fontSize: 13 }}>
+        Waiting for sensor moisture data…
+      </div>
+    );
+  }
+
   const width = 320;
   const height = 160;
   const pad = 8;
@@ -130,7 +199,14 @@ function FarmDashboard({ roleType = "rented" }) {
 
   const [user, setUser] = useState(null);
   const [land, setLand] = useState({});
+  const [farmerFields, setFarmerFields] = useState([]);
+  const [selectedFieldId, setSelectedFieldId] = useState(null);
+  const [showDeleteFields, setShowDeleteFields] = useState(false);
+  const [fieldsToDelete, setFieldsToDelete] = useState([]);
+  const [deletingFields, setDeletingFields] = useState(false);
   const [sensorData, setSensorData] = useState([]);
+  const [sensorsConnected, setSensorsConnected] = useState(false);
+  const [sensorError, setSensorError] = useState("");
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
@@ -152,12 +228,79 @@ function FarmDashboard({ roleType = "rented" }) {
 
   useEffect(() => {
     if (!user?.id) return;
-    loadAll();
+    loadProfile().finally(() => setLoading(false));
   }, [user?.id, roleType]);
+
+  useEffect(() => {
+    if (!user?.id || !isFarmer) {
+      if (!isFarmer) {
+        setFarmerFields([]);
+        setSelectedFieldId("field1");
+      }
+      return;
+    }
+
+    const bundle = loadFarmerFieldsBundle(user.id);
+    const fields = Array.isArray(bundle?.fields) ? bundle.fields : [];
+    setFarmerFields(fields);
+    setSelectedFieldId((prev) => {
+      if (prev && fields.some((f) => f.id === prev)) return prev;
+      return fields[0]?.id || null;
+    });
+
+    if (bundle) {
+      setLand((prev) => ({
+        ...prev,
+        full_name: bundle.fullName || prev.full_name,
+        address: bundle.address || prev.address,
+        experience: bundle.experience ?? prev.experience,
+      }));
+    }
+  }, [user?.id, isFarmer]);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+
+    const fieldId = isFarmer ? selectedFieldId : "field1";
+    if (!fieldId) {
+      setSensorData([]);
+      setSensorsConnected(false);
+      setSensorError("");
+      return undefined;
+    }
+
+    setSensorError("");
+    setSensorData([]);
+    const unsubscribe = subscribeSensorReadings(
+      user.id,
+      fieldId,
+      (readings) => {
+        setSensorData(readings);
+        setSensorsConnected(true);
+        setSensorError("");
+      },
+      (error) => {
+        setSensorData([]);
+        setSensorsConnected(false);
+        setSensorError(error?.message || "Could not read sensors from Firebase");
+      }
+    );
+
+    return unsubscribe;
+  }, [user?.id, selectedFieldId, isFarmer]);
 
   const loadAll = async () => {
     setLoading(true);
-    await Promise.all([loadProfile(), loadSensors()]);
+    await loadProfile();
+    if (user?.id && isFarmer) {
+      const bundle = loadFarmerFieldsBundle(user.id);
+      const fields = Array.isArray(bundle?.fields) ? bundle.fields : [];
+      setFarmerFields(fields);
+      setSelectedFieldId((prev) => {
+        if (prev && fields.some((f) => f.id === prev)) return prev;
+        return fields[0]?.id || null;
+      });
+    }
     setLoading(false);
   };
 
@@ -203,69 +346,47 @@ function FarmDashboard({ roleType = "rented" }) {
     }
   };
 
-  const loadSensors = async () => {
-    try {
-      const endpoints = [
-        `${API_BASE}/api/sensor-data/${user.id}`,
-        `${API_BASE}/api/sensors/${user.id}`,
-        `${API_BASE}/api/landowner/${user.id}/sensors`,
-      ];
-
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(endpoint);
-          if (!response.ok) continue;
-          const data = await response.json();
-          const readings = Array.isArray(data)
-            ? data
-            : Array.isArray(data?.data)
-            ? data.data
-            : Array.isArray(data?.readings)
-            ? data.readings
-            : [];
-          if (readings.length) {
-            setSensorData(
-              readings.sort(
-                (a, b) =>
-                  new Date(b.timestamp || b.createdAt || b.date || 0) -
-                  new Date(a.timestamp || a.createdAt || a.date || 0)
-              )
-            );
-            return;
-          }
-        } catch {
-          /* try next */
-        }
-      }
-      setSensorData([]);
-    } catch {
-      setSensorData([]);
-    }
-  };
-
   const latest = sensorData[0] || {};
+  const hasSensorReading = sensorData.length > 0;
 
-  const temperature = firstValue(latest, ["temperature", "temp", "temperature_c", "temperatureC"], 28.4);
-  const moisture = firstValue(latest, ["soilMoisture", "soil_moisture", "moisture"], 62);
-  const humidity = firstValue(latest, ["humidity", "airHumidity"], 71);
-  const ph = firstValue(latest, ["soilPH", "soil_ph", "ph"], 6.7);
-  const waterPh = firstValue(latest, ["waterPH", "water_ph"], 7.1);
+  const temperature = firstValue(latest, [
+    "temperature",
+    "temp",
+    "temperature_c",
+    "temperatureC",
+  ]);
+  const moisture = firstValue(latest, [
+    "soilMoisture",
+    "soil_moisture",
+    "moisture",
+  ]);
+  const humidity = firstValue(latest, ["humidity", "airHumidity"]);
+  const ph = firstValue(latest, ["soilPH", "soil_ph", "ph"]);
+  const waterPh = firstValue(latest, ["waterPH", "water_ph"]);
 
   const moistureTrend = useMemo(() => {
-    if (sensorData.length >= 4) {
-      return sensorData
-        .slice(0, 7)
-        .reverse()
-        .map((row) =>
-          Number(
-            firstValue(row, ["soilMoisture", "soil_moisture", "moisture"], 55)
-          )
-        );
-    }
-    return [48, 52, 58, 55, 61, 59, 62];
+    const values = sensorData
+      .slice(0, 7)
+      .reverse()
+      .map((row) =>
+        Number(
+          firstValue(row, ["soilMoisture", "soil_moisture", "moisture"])
+        )
+      )
+      .filter((value) => Number.isFinite(value));
+
+    return values.length ? values : [];
   }, [sensorData]);
 
+  const selectedField = useMemo(
+    () => farmerFields.find((f) => f.id === selectedFieldId) || null,
+    [farmerFields, selectedFieldId]
+  );
+
   const locationLabel = useMemo(() => {
+    if (isFarmer && selectedField?.locationLabel) {
+      return selectedField.locationLabel;
+    }
     const parts = [
       land.village,
       land.district,
@@ -273,8 +394,11 @@ function FarmDashboard({ roleType = "rented" }) {
       land.state,
     ].filter(Boolean);
     if (parts.length) return [...new Set(parts)].join(", ");
+    if (isFarmer && farmerFields.length) {
+      return `${farmerFields.length} field${farmerFields.length === 1 ? "" : "s"} registered`;
+    }
     return "Kollam, Kerala";
-  }, [land]);
+  }, [land, isFarmer, selectedField, farmerFields]);
 
   const displayName =
     user?.name ||
@@ -295,13 +419,108 @@ function FarmDashboard({ roleType = "rented" }) {
     navigate("/login");
   };
 
+  const openDeleteFieldsModal = () => {
+    if (!isFarmer || !farmerFields.length) {
+      alert("No fields to remove.");
+      return;
+    }
+    setFieldsToDelete([]);
+    setShowDeleteFields(true);
+  };
+
+  const toggleFieldForDelete = (fieldId) => {
+    setFieldsToDelete((prev) =>
+      prev.includes(fieldId)
+        ? prev.filter((id) => id !== fieldId)
+        : [...prev, fieldId]
+    );
+  };
+
+  const handleConfirmDeleteFields = async () => {
+    if (!user?.id || !fieldsToDelete.length) {
+      alert("Select which field you want to delete.");
+      return;
+    }
+
+    const bundle = loadFarmerFieldsBundle(user.id);
+    if (!bundle?.fields?.length) {
+      setShowDeleteFields(false);
+      return;
+    }
+
+    const remaining = bundle.fields.filter(
+      (field) => !fieldsToDelete.includes(field.id)
+    );
+
+    setDeletingFields(true);
+
+    try {
+      if (remaining.length > 0) {
+        const nextBundle = { ...bundle, fields: remaining };
+        saveFarmerFieldsBundle(nextBundle);
+        setFarmerProfileFlag(true);
+        setFarmerFields(remaining);
+        setSelectedFieldId((prev) =>
+          remaining.some((f) => f.id === prev) ? prev : remaining[0].id
+        );
+        setShowDeleteFields(false);
+        setFieldsToDelete([]);
+        alert(
+          remaining.length === 1
+            ? "Selected field(s) deleted. 1 field remains — use Go to dashboard from role selection."
+            : `Selected field(s) deleted. ${remaining.length} fields remain — use Go to dashboard from role selection.`
+        );
+        return;
+      }
+
+      // All fields removed → delete farmer role completely
+      await deleteFarmerRoleFully(
+        "All fields removed and farmer role deleted. You can register as farmer again from role selection."
+      );
+      setShowDeleteFields(false);
+      setFieldsToDelete([]);
+    } catch {
+      alert("Unable to delete fields. Please try again.");
+    } finally {
+      setDeletingFields(false);
+    }
+  };
+
+  const deleteFarmerRoleFully = async (successMessage) => {
+    const response = await fetch(
+      `${API_BASE}/api/profiles/${profileApiRole}/${user.id}`,
+      { method: "DELETE" }
+    );
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.detail || `Unable to delete ${roleLabel} role.`);
+    }
+
+    localStorage.removeItem(FARMER_FIELDS_KEY);
+    localStorage.removeItem("agrisenseFarmer");
+    setFarmerProfileFlag(false);
+    setFarmerFields([]);
+    setSelectedFieldId(null);
+    alert(successMessage || `${roleLabel} role deleted successfully.`);
+    navigate("/dashboard");
+  };
+
   const handleDeleteRole = async () => {
     const ok = window.confirm(
-      `Delete your ${roleLabel} role?\n\nYour ${roleLabel.toLowerCase()} profile may be removed from the system.`
+      isFarmer
+        ? "Delete your Farmer role completely?\n\nAll fields will be removed and you can register as farmer again from role selection."
+        : `Delete your ${roleLabel} role?\n\nYour ${roleLabel.toLowerCase()} profile may be removed from the system.`
     );
     if (!ok || !user?.id) return;
 
     try {
+      if (isFarmer) {
+        await deleteFarmerRoleFully(
+          "Farmer role deleted successfully. You can register again from role selection."
+        );
+        return;
+      }
+
       const response = await fetch(
         `${API_BASE}/api/profiles/${profileApiRole}/${user.id}`,
         { method: "DELETE" }
@@ -313,8 +532,8 @@ function FarmDashboard({ roleType = "rented" }) {
       }
       alert(`${roleLabel} role deleted successfully.`);
       navigate("/dashboard");
-    } catch {
-      alert("Unable to connect to server to delete role.");
+    } catch (error) {
+      alert(error?.message || "Unable to connect to server to delete role.");
     }
   };
 
@@ -353,6 +572,67 @@ function FarmDashboard({ roleType = "rented" }) {
 
   return (
     <div className="farm-dashboard">
+      {showDeleteFields && (
+        <div
+          className="fd-modal-overlay"
+          onClick={() => !deletingFields && setShowDeleteFields(false)}
+        >
+          <div
+            className="fd-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="fd-delete-fields-title"
+          >
+            <h3 id="fd-delete-fields-title">Select fields to delete</h3>
+            <p>
+              Choose which field you want to delete. If fields remain, farmer
+              stays registered and role selection will show Go to dashboard. If
+              you delete every field, the farmer role is removed and Register
+              appears again.
+            </p>
+            <div className="fd-delete-field-list">
+              {farmerFields.map((field) => (
+                <label key={field.id} className="fd-delete-field-item">
+                  <input
+                    type="checkbox"
+                    checked={fieldsToDelete.includes(field.id)}
+                    onChange={() => toggleFieldForDelete(field.id)}
+                    disabled={deletingFields}
+                  />
+                  <span>
+                    <strong>{field.name || field.id}</strong>
+                    <small>{field.locationLabel || "No location"}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="fd-modal-actions">
+              <button
+                type="button"
+                className="fd-secondary-btn"
+                disabled={deletingFields}
+                onClick={() => setShowDeleteFields(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="fd-danger-btn"
+                disabled={deletingFields || !fieldsToDelete.length}
+                onClick={handleConfirmDeleteFields}
+              >
+                {deletingFields
+                  ? "Deleting…"
+                  : fieldsToDelete.length === farmerFields.length
+                  ? "Delete all fields & role"
+                  : "Delete selected"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
         className={`fd-overlay ${mobileOpen ? "show" : ""}`}
         onClick={() => setMobileOpen(false)}
@@ -390,6 +670,16 @@ function FarmDashboard({ roleType = "rented" }) {
             <Settings size={17} />
             <span>Settings</span>
           </button>
+          {isFarmer && farmerFields.length > 0 && (
+            <button
+              type="button"
+              className="fd-nav-item danger"
+              onClick={openDeleteFieldsModal}
+            >
+              <Trash2 size={17} />
+              <span>Remove fields</span>
+            </button>
+          )}
           <button
             type="button"
             className="fd-nav-item danger"
@@ -448,7 +738,9 @@ function FarmDashboard({ roleType = "rented" }) {
               <h1>Welcome back, {String(displayName).split(" ")[0]}!</h1>
               <p>
                 Your farm is being monitored and managed automatically.
-                {land.land_name || land.farm_name
+                {isFarmer && selectedField
+                  ? ` Tracking ${selectedField.name}.`
+                  : land.land_name || land.farm_name
                   ? ` Tracking ${land.land_name || land.farm_name}.`
                   : ""}
               </p>
@@ -460,7 +752,17 @@ function FarmDashboard({ roleType = "rented" }) {
               </span>
               <span className="fd-pill">
                 <CloudSun size={13} />
-                {temperature}°C
+                {formatReading(temperature, "°C")}
+              </span>
+              <span className="fd-pill">
+                <Activity size={13} />
+                {sensorError
+                  ? "Sensors offline"
+                  : hasSensorReading
+                  ? "Live sensors"
+                  : sensorsConnected
+                  ? "Waiting for sensors"
+                  : "Connecting…"}
               </span>
               <button
                 type="button"
@@ -474,6 +776,103 @@ function FarmDashboard({ roleType = "rented" }) {
             </div>
           </section>
 
+          {isFarmer && (
+            <section className="fd-fields-panel" id="fd-fields">
+              <div className="fd-fields-head">
+                <div>
+                  <h2>Your fields</h2>
+                  <p>
+                    {farmerFields.length
+                      ? "Select a field to view its sensors below."
+                      : "No fields yet. Register Field 1 to start monitoring."}
+                  </p>
+                </div>
+                <div className="fd-fields-actions">
+                  {farmerFields.length > 0 && (
+                    <button
+                      type="button"
+                      className="fd-secondary-btn"
+                      onClick={openDeleteFieldsModal}
+                    >
+                      Remove fields
+                    </button>
+                  )}
+                  {farmerFields.length < 3 && (
+                    <button
+                      type="button"
+                      className="fd-primary-btn"
+                      onClick={() => navigate("/farmer-registration")}
+                    >
+                      Add field
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {!farmerFields.length ? (
+                <div className="fd-fields-empty">
+                  <p>Finish farmer registration to pin your fields on the map.</p>
+                  <button
+                    type="button"
+                    className="fd-primary-btn"
+                    onClick={() => navigate("/farmer-registration")}
+                  >
+                    Go to registration
+                  </button>
+                </div>
+              ) : (
+                <div className="fd-fields-layout">
+                  <div className="fd-map-square">
+                    <FarmMap
+                      fields={farmerFields}
+                      selectedFieldId={selectedFieldId}
+                      onSelectField={setSelectedFieldId}
+                      height={380}
+                    />
+                  </div>
+
+                  <div className="fd-field-side">
+                    <p className="fd-field-side-label">Fields</p>
+                    <div className="fd-field-list">
+                      {farmerFields.map((field) => {
+                        const active = selectedFieldId === field.id;
+                        return (
+                          <button
+                            key={field.id}
+                            type="button"
+                            className={`fd-field-row${active ? " active" : ""}`}
+                            onClick={() => setSelectedFieldId(field.id)}
+                          >
+                            <span className="fd-field-row-main">
+                              <strong>{field.name || field.id}</strong>
+                              <small>
+                                {field.locationLabel ||
+                                  field.farmingType ||
+                                  "No location"}
+                              </small>
+                            </span>
+                            <span className="fd-field-row-status">
+                              {active ? "Selected" : "View"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedField && (
+                      <p className="fd-selected-field-note">
+                        Showing sensors for{" "}
+                        <strong>{selectedField.name}</strong>
+                        {selectedField.farmingType
+                          ? ` · ${selectedField.farmingType}`
+                          : ""}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* METRICS */}
           <section className="fd-metrics" id="fd-soil">
             <article className="fd-metric">
@@ -485,10 +884,14 @@ function FarmDashboard({ roleType = "rented" }) {
               </div>
               <h3>Soil</h3>
               <div className="fd-metric-value">
-                <strong>pH {ph}</strong>
-                <span className="good">Good</span>
+                <strong>pH {formatReading(ph)}</strong>
+                <span className={hasSensorReading ? "good" : "normal"}>
+                  {hasSensorReading ? "Live" : "No data"}
+                </span>
               </div>
-              <small style={{ color: "var(--fd-muted)", fontSize: 11 }}>Fertility High</small>
+              <small style={{ color: "var(--fd-muted)", fontSize: 11 }}>
+                {hasSensorReading ? "From hardware sensors" : "Waiting for hardware"}
+              </small>
               <Sparkline color="#4a6b3a" />
             </article>
 
@@ -501,8 +904,10 @@ function FarmDashboard({ roleType = "rented" }) {
               </div>
               <h3>Soil Moisture</h3>
               <div className="fd-metric-value">
-                <strong>{moisture}%</strong>
-                <span className="normal">Normal</span>
+                <strong>{formatReading(moisture, "%")}</strong>
+                <span className={hasSensorReading ? "normal" : "normal"}>
+                  {hasSensorReading ? "Live" : "No data"}
+                </span>
               </div>
               <Sparkline color="#2b6cb0" points="2,18 12,16 22,20 32,10 42,14 52,8 62,12" />
             </article>
@@ -516,8 +921,8 @@ function FarmDashboard({ roleType = "rented" }) {
               </div>
               <h3>Humidity</h3>
               <div className="fd-metric-value">
-                <strong>{humidity}%</strong>
-                <span className="normal">Normal</span>
+                <strong>{formatReading(humidity, "%")}</strong>
+                <span className="normal">{hasSensorReading ? "Live" : "No data"}</span>
               </div>
               <Sparkline color="#4c6ef5" points="2,20 12,12 22,16 32,9 42,15 52,7 62,11" />
             </article>
@@ -531,8 +936,8 @@ function FarmDashboard({ roleType = "rented" }) {
               </div>
               <h3>Temperature</h3>
               <div className="fd-metric-value">
-                <strong>{temperature}°C</strong>
-                <span className="normal">Normal</span>
+                <strong>{formatReading(temperature, "°C")}</strong>
+                <span className="normal">{hasSensorReading ? "Live" : "No data"}</span>
               </div>
               <Sparkline color="#dd6b20" points="2,16 12,18 22,14 32,12 42,10 52,13 62,8" />
             </article>
@@ -546,10 +951,14 @@ function FarmDashboard({ roleType = "rented" }) {
               </div>
               <h3>Water Quality</h3>
               <div className="fd-metric-value">
-                <strong>pH {waterPh}</strong>
-                <span className="good">Good</span>
+                <strong>pH {formatReading(waterPh)}</strong>
+                <span className={hasSensorReading ? "good" : "normal"}>
+                  {hasSensorReading ? "Live" : "No data"}
+                </span>
               </div>
-              <small style={{ color: "var(--fd-muted)", fontSize: 11 }}>TDS Good</small>
+              <small style={{ color: "var(--fd-muted)", fontSize: 11 }}>
+                {hasSensorReading ? "From hardware sensors" : "Waiting for hardware"}
+              </small>
               <Sparkline color="#0d9488" />
             </article>
           </section>
@@ -566,35 +975,43 @@ function FarmDashboard({ roleType = "rented" }) {
                   <CloudSun size={28} />
                 </div>
                 <div>
-                  <strong>{temperature}°C</strong>
-                  <span>Partly Cloudy</span>
+                  <strong>{formatReading(temperature, "°C")}</strong>
+                  <span>{hasSensorReading ? "From farm sensors" : "Waiting for sensors"}</span>
                 </div>
               </div>
               <div className="fd-weather-stats">
                 <div>
                   <label>Humidity</label>
-                  <b>{humidity}%</b>
+                  <b>{formatReading(humidity, "%")}</b>
                 </div>
                 <div>
-                  <label>Rainfall</label>
-                  <b>2.4 mm</b>
+                  <label>Moisture</label>
+                  <b>{formatReading(moisture, "%")}</b>
                 </div>
                 <div>
-                  <label>Wind</label>
-                  <b>12 km/h</b>
+                  <label>Soil pH</label>
+                  <b>{formatReading(ph)}</b>
                 </div>
               </div>
             </article>
 
             <article className="fd-card" id="fd-capture">
               <div className="fd-card-head">
-                <h3>Capture Image</h3>
-                <small>AI analysis</small>
+                <h3>Crop Camera</h3>
+                <small>Demo sensor feed</small>
               </div>
               <div className="fd-capture">
-                <p>Capture crop images for disease, pest, and nutrient analysis.</p>
+                <p>
+                  Crop images will come from field cameras and sensors. Showing a
+                  demo leaf capture for now.
+                </p>
                 <div className="fd-capture-preview">
-                  <span className="tag">Leaf · 94%</span>
+                  <img
+                    src="/imagesdisease.jpg"
+                    alt="Demo crop leaf image from farm camera"
+                    className="fd-capture-image"
+                  />
+                  <span className="tag">Demo · Leaf · 94%</span>
                 </div>
                 <button type="button" className="fd-primary-btn">
                   <Camera size={16} />
@@ -607,21 +1024,21 @@ function FarmDashboard({ roleType = "rented" }) {
               <div className="fd-card-head">
                 <div>
                   <h3>Wildlife Detection</h3>
-                  <small>Farm camera · Crop protection</small>
+                  <small>Demo farm camera · Crop protection</small>
                 </div>
-                <span className="fd-live-badge">● LIVE</span>
+                <span className="fd-live-badge">● DEMO</span>
               </div>
 
               <div className="fd-wildlife">
                 <div className="fd-wildlife-feed">
                   <img
-                    src="/wildlife.jpg"
-                    alt="Wild boars detected attacking crops in a farm field"
+                    src="/attack.png"
+                    alt="Demo wild animal attack detected near crops"
                     className="fd-wildlife-image"
                   />
-                  <div className="fd-camera-label">📷 Farm Cam · Crop Monitoring</div>
-                  <div className="fd-time-label">05:27:36 AM</div>
-                  <div className="fd-crop-alert">⚠ Crop Damage Detected</div>
+                  <div className="fd-camera-label">Farm Cam · Demo</div>
+                  <div className="fd-time-label">Live preview</div>
+                  <div className="fd-crop-alert">Wild attack detected</div>
                 </div>
 
                 <div className="fd-detections">

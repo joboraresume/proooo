@@ -91,6 +91,17 @@ function AgricultureOfficerRegistration() {
       localStorage.setItem("agricultureOfficerRegistered", "true");
       localStorage.setItem("agrisenseRole", "agriculture-officer");
       localStorage.setItem("showDashboardAfterRegistration", "true");
+      localStorage.setItem(
+        "agrisenseOfficer",
+        JSON.stringify({
+          full_name: formData.fullName,
+          employee_id: formData.employeeId,
+          department: formData.department,
+          designation: formData.designation || null,
+          district: formData.district,
+          office_address: formData.officeAddress || null,
+        })
+      );
 
       /*
        * Store the officer profile locally as a fallback so the role
