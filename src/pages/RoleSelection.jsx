@@ -9,7 +9,7 @@ function RoleSelection() {
 
   const [profiles, setProfiles] = useState({
     farmer: false,
-    landowner: false,
+    rented: false,
     foreigner: false,
     worker: false,
     agriculture_officer: false,
@@ -40,7 +40,7 @@ function RoleSelection() {
 
         setProfiles({
           farmer: data.farmer || false,
-          landowner: data.landowner || false,
+          rented: data.landowner || data.rented || false,
           foreigner: data.foreigner || false,
           worker: data.worker || false,
           agriculture_officer: data.agriculture_officer || false,
@@ -70,20 +70,20 @@ function RoleSelection() {
 
       case "farmer":
         if (profiles.farmer) {
-          // Change this route later if Farmer dashboard is created
-          navigate("/dashboard");
+          navigate("/farmer-dashboard");
         } else {
           navigate("/farmer-registration");
         }
         break;
 
-      // ================= LANDOWNER =================
+      // ================= RENTED =================
 
+      case "rented":
       case "landowner":
-        if (profiles.landowner) {
-          navigate("/land-dashboard");
+        if (profiles.rented) {
+          navigate("/rented-dashboard");
         } else {
-          navigate("/land-registration");
+          navigate("/rented-registration");
         }
         break;
 
@@ -261,9 +261,9 @@ function RoleSelection() {
 
           <div
             className={`role-option ${
-              profiles.landowner ? "registered" : ""
+              profiles.rented ? "registered" : ""
             }`}
-            onClick={() => selectRole("landowner")}
+            onClick={() => selectRole("rented")}
           >
             <div className="role-icon">
               🏡
@@ -281,9 +281,9 @@ function RoleSelection() {
                   alignItems: "center",
                 }}
               >
-                <h2>Landowner</h2>
+                <h2>Rented</h2>
 
-                {profiles.landowner && (
+                {profiles.rented && (
                   <span className="registered-badge">
                     ✓ Registered
                   </span>
@@ -294,7 +294,7 @@ function RoleSelection() {
                 Register and manage your land
               </p>
 
-              {profiles.landowner && (
+              {profiles.rented && (
                 <button
                   type="button"
                   className="role-delete-btn"

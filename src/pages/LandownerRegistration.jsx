@@ -181,7 +181,7 @@ function LandownerRegistration() {
 
       if (!response.ok) {
 
-        alert(data.detail || "Landowner registration failed.");
+        alert(data.detail || "Rented registration failed.");
 
         return;
 
@@ -190,17 +190,17 @@ function LandownerRegistration() {
 
       alert(
 
-        "Landowner registration completed successfully!"
+        "Rented registration completed successfully!"
 
       );
 
 
-      navigate("/land-dashboard");
+      navigate("/rented-dashboard");
 
 
     } catch (error) {
 
-      console.error("Error creating landowner profile:", error);
+      console.error("Error creating rented profile:", error);
 
       alert("Unable to connect to the server. Please try again.");
 
@@ -228,7 +228,7 @@ function LandownerRegistration() {
 
 
         <h1>
-          🏡 Landowner Registration
+          🏡 Rented Registration
         </h1>
 
 
@@ -253,7 +253,7 @@ function LandownerRegistration() {
               <input
                 type="text"
                 name="fullName"
-                placeholder="Enter landowner name"
+                placeholder="Enter full name"
                 value={formData.fullName}
                 onChange={handleChange}
               />
@@ -261,7 +261,7 @@ function LandownerRegistration() {
 
 
               <label>
-                Owner Address
+                Address
               </label>
 
               <textarea
@@ -379,7 +379,7 @@ function LandownerRegistration() {
 
 
               <label>
-                Land Ownership Document
+                Land Document
               </label>
 
               <input
@@ -427,7 +427,7 @@ function LandownerRegistration() {
             type="submit"
             className="registration-submit"
           >
-            Complete Landowner Registration
+            Complete Rented Registration
           </button>
 
 

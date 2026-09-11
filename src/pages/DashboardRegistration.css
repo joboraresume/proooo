@@ -1,0 +1,683 @@
+* {
+  box-sizing: border-box;
+}
+
+.registration-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 85% 10%,
+      rgba(93, 169, 93, 0.13),
+      transparent 30%
+    ),
+    #f5f7f2;
+  color: #172019;
+}
+
+/* =========================================================
+   TOP ROLE NAVIGATION
+========================================================= */
+
+.registration-topbar {
+  width: 100%;
+  min-height: 78px;
+  padding: 12px 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e4e9df;
+
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.role-tabs {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.role-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.role-tab {
+  border: 0;
+  background: transparent;
+
+  min-height: 48px;
+  padding: 0 15px;
+
+  border-radius: 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #687168;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition: 0.2s ease;
+}
+
+.role-tab:hover {
+  background: #f1f5ed;
+  color: #315e38;
+}
+
+.role-tab.active {
+  color: white;
+  background: #315e38;
+  box-shadow: 0 7px 20px rgba(49, 94, 56, 0.2);
+}
+
+.registered-icon {
+  color: #65b96c;
+}
+
+.role-tab.active .registered-icon {
+  color: white;
+}
+
+/* Dashboard button */
+
+.show-dashboard-button {
+  flex-shrink: 0;
+
+  height: 48px;
+  padding: 0 18px;
+
+  border: 0;
+  border-radius: 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: #ffffff;
+  background: #18271d;
+
+  font-weight: 800;
+  font-size: 13px;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 22px rgba(24, 39, 29, 0.18);
+
+  transition: 0.2s ease;
+}
+
+.show-dashboard-button:hover {
+  transform: translateY(-2px);
+  background: #28452f;
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.registration-content {
+  width: min(1380px, calc(100% - 48px));
+  margin: auto;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.registration-hero {
+  min-height: 580px;
+
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+
+  gap: 50px;
+  padding: 65px 0 45px;
+}
+
+.hero-copy {
+  max-width: 690px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 7px 11px;
+
+  border-radius: 999px;
+
+  background: #e5f1e3;
+  color: #3c7145;
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.3px;
+}
+
+.hero-copy h1 {
+  margin: 20px 0 17px;
+
+  font-size: clamp(42px, 5vw, 72px);
+  line-height: 0.98;
+  letter-spacing: -3.5px;
+
+  color: #172019;
+}
+
+.hero-copy h1 span {
+  color: #4c8b50;
+}
+
+.hero-copy p {
+  max-width: 570px;
+
+  margin: 0;
+
+  color: #687168;
+
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+/* Hero buttons */
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 34px;
+}
+
+.primary-registration-button,
+.secondary-dashboard-button {
+  height: 52px;
+
+  border-radius: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  padding: 0 19px;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.primary-registration-button {
+  border: 0;
+
+  background: #315e38;
+  color: white;
+
+  box-shadow: 0 12px 28px rgba(49, 94, 56, 0.2);
+}
+
+.primary-registration-button:hover {
+  transform: translateY(-2px);
+  background: #244b2c;
+}
+
+.secondary-dashboard-button {
+  border: 1px solid #dce4d9;
+  background: white;
+  color: #334138;
+}
+
+.secondary-dashboard-button:hover {
+  border-color: #b9c9b7;
+  background: #f9fbf8;
+}
+
+/* =========================================================
+   HERO VISUAL
+========================================================= */
+
+.hero-visual {
+  min-height: 450px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+}
+
+.hero-orbit {
+  position: absolute;
+  border: 1px solid rgba(75, 139, 80, 0.16);
+  border-radius: 50%;
+}
+
+.orbit-one {
+  width: 420px;
+  height: 420px;
+}
+
+.orbit-two {
+  width: 330px;
+  height: 330px;
+}
+
+.hero-land-card {
+  width: min(430px, 90%);
+
+  overflow: hidden;
+
+  border-radius: 28px;
+
+  background: #17271c;
+
+  box-shadow:
+    0 35px 70px rgba(27, 50, 31, 0.25),
+    0 8px 25px rgba(27, 50, 31, 0.12);
+
+  position: relative;
+  z-index: 2;
+}
+
+.land-card-top {
+  padding: 19px 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: #dce9dc;
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.live-dot {
+  color: #86cf87;
+  font-size: 10px;
+}
+
+.field-visual {
+  height: 285px;
+
+  padding: 38px 28px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  background:
+    linear-gradient(
+      140deg,
+      #648a4d 0%,
+      #507b42 40%,
+      #315e38 100%
+    );
+}
+
+.field-row {
+  height: 29px;
+
+  border-radius: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(29, 64, 33, 0.7),
+      rgba(139, 177, 89, 0.7),
+      rgba(29, 64, 33, 0.7)
+    );
+
+  transform: perspective(500px) rotateX(45deg);
+}
+
+.row-2 {
+  width: 92%;
+  margin-left: auto;
+}
+
+.row-3 {
+  width: 85%;
+}
+
+.row-4 {
+  width: 94%;
+  margin-left: auto;
+}
+
+.row-5 {
+  width: 78%;
+}
+
+.field-bottom {
+  padding: 19px 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #17271c;
+
+  color: white;
+}
+
+.field-bottom small {
+  display: block;
+
+  color: #8e9e91;
+
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 800;
+
+  margin-bottom: 4px;
+}
+
+.field-bottom strong {
+  font-size: 16px;
+}
+
+.field-status {
+  padding: 8px 10px;
+
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  border-radius: 10px;
+
+  background: rgba(102, 182, 105, 0.12);
+  color: #8ed190;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   SELECTED ROLE
+========================================================= */
+
+.selected-role-section {
+  padding: 25px 0 70px;
+}
+
+.selected-role-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+.section-label {
+  color: #79907b;
+
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.selected-role-heading h2 {
+  margin: 5px 0 0;
+
+  font-size: 28px;
+  letter-spacing: -1px;
+}
+
+.already-registered {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 9px 13px;
+
+  border-radius: 999px;
+
+  color: #3b7942;
+  background: #e6f3e5;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.role-information-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr;
+  gap: 15px;
+}
+
+.information-card {
+  min-height: 125px;
+
+  padding: 22px;
+
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  background: white;
+
+  border: 1px solid #e3e9df;
+  border-radius: 20px;
+
+  box-shadow: 0 7px 25px rgba(32, 52, 34, 0.045);
+}
+
+.information-icon {
+  width: 52px;
+  height: 52px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 15px;
+}
+
+.information-icon.green {
+  background: #e4f2e3;
+  color: #397541;
+}
+
+.information-icon.earth {
+  background: #f1e9dc;
+  color: #87673c;
+}
+
+.information-icon.orange {
+  background: #fff0df;
+  color: #bb6c20;
+}
+
+.information-icon.blue {
+  background: #e4eff8;
+  color: #3e7094;
+}
+
+.information-icon.purple {
+  background: #eee8f7;
+  color: #735b94;
+}
+
+.information-card h3 {
+  margin: 0 0 5px;
+
+  color: #1b281e;
+
+  font-size: 15px;
+}
+
+.information-card p {
+  margin: 0;
+
+  color: #788178;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.information-number {
+  width: 54px;
+  height: 54px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 15px;
+
+  background: #eef3eb;
+
+  color: #315e38;
+
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.action-card {
+  padding: 12px;
+}
+
+.action-card button {
+  width: 100%;
+  height: 100%;
+
+  border: 0;
+  border-radius: 14px;
+
+  background: #f0f5ed;
+  color: #315e38;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  font-size: 13px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.action-card button:hover {
+  background: #315e38;
+  color: white;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1050px) {
+  .registration-topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .show-dashboard-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .registration-hero {
+    grid-template-columns: 1fr;
+    padding-top: 45px;
+  }
+
+  .hero-copy {
+    max-width: 800px;
+  }
+
+  .hero-visual {
+    min-height: 430px;
+  }
+
+  .role-information-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .registration-content {
+    width: min(100% - 28px, 1380px);
+  }
+
+  .registration-topbar {
+    padding: 10px 14px;
+  }
+
+  .role-tabs {
+    width: 100%;
+  }
+
+  .role-tab {
+    padding: 0 12px;
+  }
+
+  .hero-copy h1 {
+    font-size: 43px;
+    letter-spacing: -2px;
+  }
+
+  .hero-copy p {
+    font-size: 15px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .primary-registration-button,
+  .secondary-dashboard-button {
+    width: 100%;
+  }
+
+  .hero-visual {
+    min-height: 350px;
+  }
+
+  .orbit-one {
+    width: 330px;
+    height: 330px;
+  }
+
+  .orbit-two {
+    width: 270px;
+    height: 270px;
+  }
+
+  .hero-land-card {
+    width: 95%;
+  }
+
+  .field-visual {
+    height: 220px;
+  }
+
+  .selected-role-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+}

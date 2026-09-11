@@ -1,234 +1,892 @@
-.registration-page {
+/* =========================================================
+   AGRISENSE ROLE REGISTRATION
+   COMPLETE RoleRegistration.css
+   Replace your whole old file with this
+   ========================================================= */
 
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f8f2;
+  color: #253229;
+}
+
+
+/* =========================================================
+   MAIN PAGE
+   ========================================================= */
+
+.registration-page {
+  width: 100%;
   min-height: 100vh;
 
-  display: flex;
+  padding: 35px 24px 50px;
 
+  background:
+    radial-gradient(
+      circle at 90% 5%,
+      rgba(75, 160, 82, 0.15),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 5% 80%,
+      rgba(121, 181, 93, 0.1),
+      transparent 30%
+    ),
+    #f4f8f2;
+
+  display: flex;
   justify-content: center;
-
-  align-items: center;
-
-  padding: 40px 20px;
-
-  background: #f4f8f3;
-}
-
-
-.registration-card {
-
-  width: 620px;
-
-  max-width: 100%;
-
-  background: white;
-
-  padding: 40px;
-
-  border-radius: 22px;
-
-  box-shadow:
-    0 10px 35px rgba(0, 0, 0, 0.10);
-
-}
-
-.registration-card.large-card {
-  width: 950px;
-}
-
-
-.registration-back {
-
-  border: none;
-
-  background: transparent;
-
-  color: #168b3b;
-
-  font-size: 15px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  margin-bottom: 20px;
-
-}
-
-
-.registration-card h1 {
-
-  text-align: center;
-
-  color: #173b24;
-
-  margin: 0;
-
-  font-size: 30px;
-
-}
-
-
-.registration-subtitle {
-
-  text-align: center;
-
-  color: #666;
-
-  margin-top: 8px;
-
-  margin-bottom: 30px;
-
-}
-
-
-.registration-form {
-
-  display: flex;
-
-  flex-direction: column;
-
-}
-
-.map-layout {
-  display: flex;
-  gap: 40px;
   align-items: flex-start;
 }
 
-.map-layout .form-fields {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
 
-.map-layout .map-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
+/* =========================================================
+   MAIN CARD
+   ========================================================= */
 
-.map-wrapper-box {
+.registration-card {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  margin-top: 10px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #d1d5d1;
-}
+  max-width: 1180px;
 
+  margin: 0 auto;
 
-.registration-form label {
+  padding: 34px 38px 40px;
 
-  margin-top: 15px;
+  background: #ffffff;
 
-  margin-bottom: 7px;
-
-  color: #333;
-
-  font-weight: 600;
-
-}
-
-
-.registration-form input,
-.registration-form select,
-.registration-form textarea {
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 12px 14px;
-
-  border: 1px solid #d1d5d1;
-
-  border-radius: 9px;
-
-  background: white;
-
-  color: #222;
-
-  font-size: 15px;
-
-  outline: none;
-
-}
-
-
-.registration-form textarea {
-
-  min-height: 90px;
-
-  resize: vertical;
-
-}
-
-
-.registration-form input:focus,
-.registration-form select:focus,
-.registration-form textarea:focus {
-
-  border-color: #168b3b;
+  border: 1px solid #dce7da;
+  border-radius: 22px;
 
   box-shadow:
-    0 0 0 2px rgba(22, 139, 59, 0.08);
-
+    0 12px 35px rgba(44, 78, 47, 0.08);
 }
 
 
-.registration-submit {
+/* Works when JSX has:
+   className="registration-card large-card"
+*/
 
-  width: 100%;
+.registration-card.large-card {
+  max-width: 1200px;
+}
 
-  margin-top: 28px;
 
-  padding: 14px;
+/* =========================================================
+   BACK BUTTON
+   ========================================================= */
 
-  border: none;
+.registration-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
+  min-height: 40px;
+
+  padding: 8px 14px;
+
+  margin-bottom: 20px;
+
+  border: 1px solid #cbdccb;
   border-radius: 9px;
 
-  background: #168b3b;
+  background: #f7fbf6;
 
-  color: white;
+  color: #397242;
 
-  font-size: 16px;
-
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
 
   cursor: pointer;
 
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
+}
 
+.registration-back:hover {
+  background: #eaf5e9;
+  border-color: #a9c9aa;
+  transform: translateX(-2px);
 }
 
 
-.registration-submit:hover {
+/* =========================================================
+   MAIN TITLE
+   ========================================================= */
 
-  background: #0f6f2e;
+/*
+  This styles the title even if your JSX is simply:
+
+  <h2>Farmer Registration</h2>
+
+  and does not have registration-title class.
+*/
+
+.registration-card > h1,
+.registration-card > h2 {
+  margin: 0;
+
+  color: #214c2b;
+
+  font-size: 30px;
+  font-weight: 800;
+
+  line-height: 1.25;
+}
+
+
+/* =========================================================
+   SUBTITLE
+   ========================================================= */
+
+.registration-subtitle {
+  margin-top: 8px;
+  margin-bottom: 25px;
+
+  max-width: 800px;
+
+  color: #6d7e70;
+
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   EXISTING FARMER MESSAGE
+   ========================================================= */
+
+.existing-farmer-box {
+  width: 100%;
+
+  margin-bottom: 25px;
+
+  padding: 16px 18px;
+
+  background: #eff8ee;
+
+  border: 1px solid #c9dfc8;
+  border-radius: 12px;
+
+  color: #426c47;
+}
+
+.existing-farmer-box h3,
+.existing-farmer-box h4 {
+  margin: 0 0 5px 0;
+
+  color: #2d6435;
+
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.existing-farmer-box p {
+  margin: 0;
+
+  color: #657568;
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   FARMER PROFILE SECTION
+   ========================================================= */
+
+.farmer-profile-fields {
+  width: 100%;
+
+  margin-bottom: 28px;
+
+  padding: 22px;
+
+  background: #f9fcf8;
+
+  border: 1px solid #dce7da;
+  border-radius: 15px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px 20px;
+}
+
+
+/* =========================================================
+   REGISTRATION FORM
+   ========================================================= */
+
+.registration-form {
+  width: 100%;
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+   ========================================================= */
+
+.registration-form h2,
+.registration-form h3,
+.registration-form h4 {
+  margin-top: 0;
+
+  color: #285331;
+}
+
+.registration-form h3 {
+  margin-bottom: 18px;
+
+  font-size: 19px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   TWO COLUMN CONTENT
+   LEFT = FORM
+   RIGHT = MAP
+   ========================================================= */
+
+.map-layout {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(380px, 1fr);
+
+  gap: 28px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   FORM FIELDS AREA
+   ========================================================= */
+
+.form-fields {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+
+/* =========================================================
+   LABEL WRAPPERS
+   ========================================================= */
+
+/*
+  Supports:
+
+  <label>
+    Name
+    <input />
+  </label>
+
+  AND:
+
+  <div className="form-group">
+    <label>Name</label>
+    <input />
+  </div>
+*/
+
+.registration-form label,
+.farmer-profile-fields label {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  color: #334639;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   FORM GROUP SUPPORT
+   ========================================================= */
+
+.form-group {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+/* =========================================================
+   ALL INPUTS
+   ========================================================= */
+
+.registration-form input,
+.registration-form select,
+.registration-form textarea,
+.farmer-profile-fields input,
+.farmer-profile-fields select,
+.farmer-profile-fields textarea {
+  width: 100%;
+
+  min-width: 0;
+  min-height: 46px;
+
+  padding: 10px 13px;
+
+  background: #ffffff;
+
+  border: 1px solid #ccd9ca;
+  border-radius: 9px;
+
+  color: #28362c;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+/* =========================================================
+   INPUT PLACEHOLDER
+   ========================================================= */
+
+.registration-form input::placeholder,
+.registration-form textarea::placeholder,
+.farmer-profile-fields input::placeholder {
+  color: #a0aaa1;
+}
+
+
+/* =========================================================
+   INPUT HOVER
+   ========================================================= */
+
+.registration-form input:hover,
+.registration-form select:hover,
+.registration-form textarea:hover,
+.farmer-profile-fields input:hover,
+.farmer-profile-fields select:hover {
+  border-color: #acc5ab;
+}
+
+
+/* =========================================================
+   INPUT FOCUS
+   ========================================================= */
+
+.registration-form input:focus,
+.registration-form select:focus,
+.registration-form textarea:focus,
+.farmer-profile-fields input:focus,
+.farmer-profile-fields select:focus {
+  border-color: #4c9154;
+
+  box-shadow:
+    0 0 0 3px rgba(76, 145, 84, 0.12);
+}
+
+
+/* =========================================================
+   SELECT
+   ========================================================= */
+
+.registration-form select,
+.farmer-profile-fields select {
+  cursor: pointer;
+
+  background-color: #ffffff;
+}
+
+
+/* =========================================================
+   TEXTAREA
+   ========================================================= */
+
+.registration-form textarea,
+.farmer-profile-fields textarea {
+  min-height: 95px;
+
+  resize: vertical;
+}
+
+
+/* =========================================================
+   FULL WIDTH SUPPORT
+   ========================================================= */
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   MAP SECTION
+   ========================================================= */
+
+.map-section {
+  width: 100%;
+  min-width: 0;
+
+  padding: 20px;
+
+  background: #f9fcf8;
+
+  border: 1px solid #dce7da;
+  border-radius: 15px;
+}
+
+
+/* =========================================================
+   MAP TITLE
+   ========================================================= */
+
+.map-section h3 {
+  margin: 0 0 6px 0;
+
+  color: #285331;
+
+  font-size: 18px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   MAP DESCRIPTION
+   ========================================================= */
+
+.map-hint {
+  margin: 0 0 14px 0;
+
+  color: #748077;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   MAP CONTAINER
+   ========================================================= */
+
+.map-wrapper-box {
+  width: 100%;
+  height: 410px;
+
+  position: relative;
+
+  overflow: hidden;
+
+  background: #e8f0e6;
+
+  border: 1px solid #cad9c7;
+  border-radius: 12px;
+}
+
+
+/* =========================================================
+   IMPORTANT LEAFLET FIX
+   ========================================================= */
+
+/*
+  This is very important.
+
+  Without height: 100%, Leaflet maps can disappear.
+*/
+
+.map-wrapper-box .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+
+  min-height: 410px;
+
+  border-radius: 12px;
+}
+
+
+/* Additional fallback */
+
+.leaflet-container {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* =========================================================
+   MAP COORDINATE BOX
+   ========================================================= */
+
+.coordinates-box {
+  margin-top: 12px;
+
+  padding: 11px 13px;
+
+  background: #edf6ec;
+
+  border: 1px solid #cfe0cd;
+  border-radius: 9px;
+
+  color: #49664c;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.coordinates-box strong {
+  color: #2c6235;
+}
+
+
+/* =========================================================
+   ACTION BUTTON AREA
+   ========================================================= */
+
+.registration-actions {
+  width: 100%;
+
+  margin-top: 30px;
+  padding-top: 22px;
+
+  border-top: 1px solid #e0e8de;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 12px;
+}
+
+
+/* =========================================================
+   SECONDARY BUTTON
+   ========================================================= */
+
+.registration-secondary {
+  min-height: 46px;
+
+  padding: 10px 20px;
+
+  background: #ffffff;
+
+  border: 1px solid #bad0b9;
+  border-radius: 9px;
+
+  color: #3c7043;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.registration-secondary:hover {
+  background: #eef7ed;
+
+  border-color: #9abb9a;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   PRIMARY SAVE BUTTON
+   ========================================================= */
+
+.registration-submit {
+  min-height: 46px;
+
+  padding: 10px 22px;
+
+  background: #347d40;
+
+  border: 1px solid #347d40;
+  border-radius: 9px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 12px rgba(52, 125, 64, 0.18);
+
+  transition: all 0.2s ease;
+}
+
+.registration-submit:hover {
+  background: #286b34;
+  border-color: #286b34;
 
   transform: translateY(-1px);
 
+  box-shadow:
+    0 7px 16px rgba(52, 125, 64, 0.22);
 }
 
 
-@media (max-width: 600px) {
+/* =========================================================
+   BUTTON DISABLED
+   ========================================================= */
 
-  .registration-card {
+.registration-submit:disabled,
+.registration-secondary:disabled {
+  opacity: 0.55;
 
-    padding: 25px 20px;
+  cursor: not-allowed;
 
+  transform: none;
+}
+
+
+/* =========================================================
+   LEAFLET ZOOM BUTTONS
+   ========================================================= */
+
+.leaflet-control-zoom a {
+  color: #34723d !important;
+}
+
+
+/* =========================================================
+   LEAFLET POPUP
+   ========================================================= */
+
+.leaflet-popup-content-wrapper {
+  border-radius: 10px;
+}
+
+.leaflet-popup-content {
+  font-size: 13px;
+  color: #344438;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+  .registration-page {
+    padding: 24px 18px 40px;
   }
 
-
-  .registration-card h1 {
-
-    font-size: 25px;
-
+  .registration-card {
+    padding: 28px;
   }
 
   .map-layout {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
+  .map-section {
+    width: 100%;
+  }
+
+  .map-wrapper-box {
+    height: 380px;
+  }
+
+  .map-wrapper-box .leaflet-container {
+    min-height: 380px;
+  }
+}
+
+
+/* =========================================================
+   SMALL TABLET
+   ========================================================= */
+
+@media (max-width: 720px) {
+
+  .registration-page {
+    padding: 16px 12px 30px;
+  }
+
+  .registration-card {
+    padding: 22px 18px 27px;
+
+    border-radius: 17px;
+  }
+
+  .registration-card > h1,
+  .registration-card > h2 {
+    font-size: 25px;
+  }
+
+  .registration-subtitle {
+    font-size: 14px;
+  }
+
+  .farmer-profile-fields {
+    grid-template-columns: 1fr;
+
+    padding: 18px;
+  }
+
+  .form-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: auto;
+  }
+
+  .map-layout {
+    gap: 22px;
+  }
+
+  .map-section {
+    padding: 16px;
+  }
+
+  .map-wrapper-box {
+    height: 330px;
+  }
+
+  .map-wrapper-box .leaflet-container {
+    min-height: 330px;
+  }
+
+  .registration-actions {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .registration-secondary,
+  .registration-submit {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+  .registration-page {
+    padding: 8px;
+  }
+
+  .registration-card {
+    padding: 18px 14px 22px;
+
+    border-radius: 14px;
+  }
+
+  .registration-back {
+    min-height: 36px;
+
+    margin-bottom: 15px;
+
+    font-size: 12px;
+  }
+
+  .registration-card > h1,
+  .registration-card > h2 {
+    font-size: 22px;
+  }
+
+  .registration-subtitle {
+    margin-bottom: 20px;
+
+    font-size: 13px;
+  }
+
+  .existing-farmer-box {
+    padding: 14px;
+  }
+
+  .farmer-profile-fields {
+    padding: 15px;
+
+    gap: 15px;
+  }
+
+  .registration-form label,
+  .farmer-profile-fields label {
+    font-size: 13px;
+  }
+
+  .registration-form input,
+  .registration-form select,
+  .registration-form textarea,
+  .farmer-profile-fields input,
+  .farmer-profile-fields select,
+  .farmer-profile-fields textarea {
+    min-height: 43px;
+
+    padding: 9px 11px;
+
+    font-size: 13px;
+  }
+
+  .map-section {
+    padding: 13px;
+  }
+
+  .map-wrapper-box {
+    height: 290px;
+  }
+
+  .map-wrapper-box .leaflet-container {
+    min-height: 290px;
+  }
+
+  .coordinates-box {
+    font-size: 12px;
+  }
+
+  .registration-actions {
+    margin-top: 22px;
+    padding-top: 18px;
+  }
+
+  .registration-secondary,
+  .registration-submit {
+    min-height: 44px;
+
+    font-size: 13px;
+  }
 }

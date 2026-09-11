@@ -1,214 +1,465 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import {
+  Sprout,
+  LandPlot,
+  HardHat,
+  Globe2,
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle2,
+  LogOut,
+  LayoutDashboard,
+  Mountain,
+  X,
+} from "lucide-react";
+
 import "./Dashboard.css";
+
+const API_BASE = (
+  import.meta?.env?.VITE_API_BASE_URL ||
+  "http://localhost:5000"
+).replace(/\/$/, "");
+
+const roleConfig = [
+  {
+    id: "cultivated-land",
+    name: "Cultivated on Land",
+    description: "Manage agricultural land and farming activities",
+    icon: LandPlot,
+    className: "earth",
+    isCategory: true,
+    subRoles: ["farmer", "rented"],
+  },
+
+  {
+    id: "farmer",
+    name: "Farmer",
+    description: "Farming activities and crop management",
+    icon: Sprout,
+    registration: "/farmer-registration",
+    dashboard: "/farmer-dashboard",
+    className: "green",
+    parentCategory: "cultivated-land",
+  },
+
+  {
+    id: "rented",
+    name: "Rented",
+    description: "Land registration and land monitoring",
+    icon: LandPlot,
+    registration: "/rented-registration",
+    dashboard: "/rented-dashboard",
+    className: "earth",
+    parentCategory: "cultivated-land",
+  },
+
+  {
+    id: "terrace-farming",
+    name: "Terrace Farming",
+    description: "Sustainable farming on terraced landscapes",
+    icon: Mountain,
+    className: "teal",
+    isCategory: true,
+    subRoles: ["cultivated-waste", "cultivated-soil"],
+  },
+
+  {
+    id: "cultivated-waste",
+    name: "Cultivated on Waste",
+    description: "Utilization of waste land for agriculture",
+    icon: Sprout,
+    registration: "/terrace-farming",
+    dashboard: "/terrace-dashboard",
+    className: "yellow",
+    parentCategory: "terrace-farming",
+  },
+
+  {
+    id: "cultivated-soil",
+    name: "Cultivated on Soil",
+    description: "Traditional soil-based cultivation",
+    icon: Sprout,
+    registration: "/terrace-farming",
+    dashboard: "/terrace-dashboard",
+    className: "brown",
+    parentCategory: "terrace-farming",
+  },
+
+  {
+    id: "worker",
+    name: "Agricultural Worker",
+    description: "Agricultural work and opportunities",
+    icon: HardHat,
+    registration: "/worker-registration",
+    dashboard: "/worker-dashboard",
+    className: "orange",
+  },
+
+  {
+    id: "foreigner",
+    name: "Foreigner",
+    description: "Agricultural opportunities and services",
+    icon: Globe2,
+    registration: "/foreigner-registration",
+    dashboard: "/foreign-dashboard",
+    className: "blue",
+  },
+
+  {
+    id: "officer",
+    name: "Agriculture Officer",
+    description: "Agricultural administration and monitoring",
+    icon: ShieldCheck,
+    registration: "/agriculture-officer-registration",
+    dashboard: "/agriculture-officer-dashboard",
+    className: "purple",
+  },
+];
 
 function Dashboard() {
   const navigate = useNavigate();
 
-  const [profiles, setProfiles] = useState({
-    farmer: false,
-    landowner: false,
-    foreigner: false,
-    worker: false,
-    agriculture_officer: false,
-    terrace: false,
-  });
-
-  const [loading, setLoading] = useState(true);
-  const [showFieldSubOptions, setShowFieldSubOptions] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [user, setUser] = useState(null);
+  const [profiles, setProfiles] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [modalCategory, setModalCategory] = useState(null);
 
-  // ================= FETCH USER ROLE PROFILES =================
-
-  const fetchProfiles = async () => {
-    try {
-      const userStr = localStorage.getItem("agrisenseUser");
-
-      if (!userStr) {
-        navigate("/login");
-        return;
-      }
-
-      const user = JSON.parse(userStr);
-
-      const response = await fetch(
-        `http://localhost:5000/api/profiles/${user.id}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-
-        setProfiles({
-          farmer: data.farmer || false,
-          landowner: data.landowner || false,
-          foreigner: data.foreigner || false,
-          worker: data.worker || false,
-          agriculture_officer: data.agriculture_officer || false,
-          terrace: data.terrace || false,
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching profiles:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ================= LOAD PROFILES =================
+  // =========================================================
+  // LOAD USER
+  // =========================================================
 
   useEffect(() => {
-    fetchProfiles();
-    const userStr = localStorage.getItem("agrisenseUser");
-    if (userStr) {
-      setUser(JSON.parse(userStr));
-    }
+    try {
+      const savedUser = JSON.parse(
+        localStorage.getItem("agrisenseUser") || "null"
+      );
 
-    // Check if we should show dashboard after registration
-    const showDashboardFlag = localStorage.getItem("showDashboardAfterRegistration");
-    if (showDashboardFlag === "true") {
-      setShowDashboard(true);
-      localStorage.removeItem("showDashboardAfterRegistration");
+      setUser(savedUser);
+
+      if (savedUser?.id) {
+        loadProfiles(savedUser.id);
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Unable to read user:", error);
+      setLoading(false);
     }
   }, []);
 
-  // ================= ROLE SELECTION =================
+  // =========================================================
+  // LOAD PROFILES FROM BACKEND
+  // =========================================================
 
-  const selectRole = (role) => {
-    localStorage.setItem("agrisenseRole", role);
-
-    switch (role) {
-      // ================= FARMER =================
-
-      case "farmer":
-        if (profiles.farmer) {
-          // Change this route later if Farmer dashboard is created
-          navigate("/dashboard");
-        } else {
-          navigate("/farmer-registration");
-        }
-        break;
-
-      // ================= LANDOWNER =================
-
-      case "landowner":
-        if (profiles.landowner) {
-          navigate("/land-dashboard");
-        } else {
-          navigate("/landowner-registration");
-        }
-        break;
-
-      // ================= FOREIGNER =================
-
-      case "foreigner":
-        if (profiles.foreigner) {
-          navigate("/foreign-dashboard");
-        } else {
-          navigate("/foreigner-registration");
-        }
-        break;
-
-      // ================= WORKER =================
-
-      case "worker":
-        if (profiles.worker) {
-          navigate("/worker-dashboard");
-        } else {
-          navigate("/worker-registration");
-        }
-        break;
-
-      // ================= AGRICULTURE OFFICER =================
-
-      case "agriculture-officer":
-        if (profiles.agriculture_officer) {
-          navigate("/agriculture-officer-dashboard");
-        } else {
-          navigate("/agriculture-officer-registration");
-        }
-        break;
-
-      // ================= TERRACE FARMING =================
-
-      case "terrace-farming":
-        if (profiles.terrace) {
-          // Change when Terrace dashboard is available
-          navigate("/dashboard");
-        } else {
-          navigate("/terrace-farming");
-        }
-        break;
-
-      default:
-        break;
-    }
-  };
-
-  // ================= DELETE ROLE =================
-
-  const deleteRoleProfile = async (e, apiRole) => {
-    e.stopPropagation();
-
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete your registered role profile?"
-    );
-
-    if (!confirmDelete) {
-      return;
-    }
+  const loadProfiles = async (userId) => {
+    setLoading(true);
 
     try {
-      const userStr = localStorage.getItem("agrisenseUser");
-
-      if (!userStr) {
-        return;
-      }
-
-      const user = JSON.parse(userStr);
-
       const response = await fetch(
-        `http://localhost:5000/api/profiles/${apiRole}/${user.id}`,
-        {
-          method: "DELETE",
-        }
+        `${API_BASE}/api/profiles/${userId}`
       );
 
       if (response.ok) {
-        alert("Role profile deleted successfully!");
-
-        fetchProfiles();
-      } else {
         const data = await response.json();
 
-        alert(data.detail || "Failed to delete role profile.");
-      }
-    } catch (err) {
-      console.error("Error deleting role:", err);
+        console.log("Profile API response:", data);
 
-      alert("Unable to connect to server to delete role.");
+        /*
+         * Backend may return:
+         *
+         * 1. Object:
+         * {
+         *   farmer: true,
+         *   agriculture_officer: true
+         * }
+         *
+         * OR
+         *
+         * 2. Array:
+         * [
+         *   { role: "agriculture_officer" }
+         * ]
+         */
+
+        const normalizedProfiles = {};
+
+        // -----------------------------------------------------
+        // CASE 1: Object response
+        // -----------------------------------------------------
+
+        if (
+          typeof data === "object" &&
+          data !== null &&
+          !Array.isArray(data)
+        ) {
+          if (data.farmer) {
+            normalizedProfiles.farmer = true;
+          }
+
+          if (data.landowner || data.rented) {
+            normalizedProfiles.rented = true;
+          }
+
+          if (data.foreigner) {
+            normalizedProfiles.foreigner = true;
+          }
+
+          if (data.worker) {
+            normalizedProfiles.worker = true;
+          }
+
+          // IMPORTANT:
+          // Backend may call it agriculture_officer
+          // while frontend role is officer.
+
+          if (
+            data.agriculture_officer ||
+            data.agricultureOfficer ||
+            data.officer
+          ) {
+            normalizedProfiles.officer = true;
+            normalizedProfiles.agriculture_officer = true;
+          }
+
+          if (data.terrace) {
+            normalizedProfiles.terrace = true;
+          }
+
+          if (data["cultivated-waste"]) {
+            normalizedProfiles["cultivated-waste"] = true;
+          }
+
+          if (data["cultivated-soil"]) {
+            normalizedProfiles["cultivated-soil"] = true;
+          }
+        }
+
+        // -----------------------------------------------------
+        // CASE 2: Array response
+        // -----------------------------------------------------
+
+        if (Array.isArray(data)) {
+          data.forEach((profile) => {
+            if (!profile) return;
+
+            const role =
+              profile.role ||
+              profile.role_id ||
+              profile.roleId ||
+              profile.profile_type ||
+              profile.type;
+
+            if (!role) return;
+
+            if (role === "farmer") {
+              normalizedProfiles.farmer = true;
+            }
+
+            if (
+              role === "rented" ||
+              role === "landowner" ||
+              role === "land_owner"
+            ) {
+              normalizedProfiles.rented = true;
+            }
+
+            if (role === "foreigner") {
+              normalizedProfiles.foreigner = true;
+            }
+
+            if (role === "worker" || role === "agricultural_worker") {
+              normalizedProfiles.worker = true;
+            }
+
+            if (
+              role === "officer" ||
+              role === "agriculture_officer" ||
+              role === "agriculture-officer"
+            ) {
+              normalizedProfiles.officer = true;
+              normalizedProfiles.agriculture_officer = true;
+            }
+
+            if (
+              role === "terrace" ||
+              role === "terrace-farming"
+            ) {
+              normalizedProfiles.terrace = true;
+            }
+          });
+        }
+
+        // -----------------------------------------------------
+        // Keep local officer registration as a fallback
+        // -----------------------------------------------------
+
+        if (
+          localStorage.getItem(
+            "agricultureOfficerRegistered"
+          ) === "true"
+        ) {
+          normalizedProfiles.officer = true;
+          normalizedProfiles.agriculture_officer = true;
+        }
+
+        console.log(
+          "Normalized profiles:",
+          normalizedProfiles
+        );
+
+        setProfiles(normalizedProfiles);
+
+        localStorage.setItem(
+          "agrisenseProfiles",
+          JSON.stringify(normalizedProfiles)
+        );
+
+        setLoading(false);
+
+        return;
+      }
+
+      console.warn(
+        "Profile API returned status:",
+        response.status
+      );
+    } catch (error) {
+      console.warn(
+        "Unable to load profiles from server. Using local profile data.",
+        error
+      );
     }
+
+    // =========================================================
+    // FALLBACK TO LOCAL STORAGE
+    // =========================================================
+
+    try {
+      const localProfiles = JSON.parse(
+        localStorage.getItem("agrisenseProfiles") || "{}"
+      );
+
+      const normalizedLocalProfiles = {};
+
+      if (
+        localProfiles &&
+        typeof localProfiles === "object" &&
+        !Array.isArray(localProfiles)
+      ) {
+        Object.keys(localProfiles).forEach((key) => {
+          if (localProfiles[key] === true) {
+            normalizedLocalProfiles[key] = true;
+          }
+        });
+      }
+
+      // Officer fallback
+      if (
+        localStorage.getItem(
+          "agricultureOfficerRegistered"
+        ) === "true"
+      ) {
+        normalizedLocalProfiles.officer = true;
+        normalizedLocalProfiles.agriculture_officer = true;
+      }
+
+      setProfiles(normalizedLocalProfiles);
+    } catch (error) {
+      console.error(
+        "Unable to read local profile data:",
+        error
+      );
+
+      setProfiles({});
+    }
+
+    setLoading(false);
   };
 
-  // ================= LOADING =================
+  // =========================================================
+  // CHECK IF ROLE IS REGISTERED
+  // =========================================================
+
+  const getProfileForRole = (roleId) => {
+    /*
+     * Agriculture Officer special handling.
+     *
+     * Frontend:
+     *    officer
+     *
+     * Backend:
+     *    agriculture_officer
+     */
+
+    if (roleId === "officer") {
+      return (
+        profiles.officer === true ||
+        profiles.agriculture_officer === true ||
+        localStorage.getItem(
+          "agricultureOfficerRegistered"
+        ) === "true"
+      );
+    }
+
+    return profiles[roleId] === true;
+  };
+
+  // =========================================================
+  // LOGOUT
+  // =========================================================
+
+  const logout = () => {
+    localStorage.removeItem("agrisenseUser");
+    localStorage.removeItem("agrisenseRole");
+
+    navigate("/login");
+  };
+
+  // =========================================================
+  // GO TO REGISTRATION PAGE
+  // =========================================================
+
+  const goToRegistration = () => {
+    navigate("/dashboard-registration");
+  };
+
+  // =========================================================
+  // LOADING SCREEN
+  // =========================================================
 
   if (loading) {
     return (
       <div className="dashboard-page">
-        <div className="loading-container">
-          <h1>Loading...</h1>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            color: "#06473b",
+            fontSize: "18px",
+            fontWeight: "600",
+          }}
+        >
+          Loading your AgriSense dashboard...
         </div>
       </div>
     );
   }
 
-
-  // ================= PAGE =================
+  // =========================================================
+  // MAIN UI
+  // =========================================================
 
   return (
     <div className="dashboard-page">
 
-      {/* HEADER */}
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
 
       <header className="dashboard-header">
 
@@ -228,345 +479,611 @@ function Dashboard() {
 
         </div>
 
-
         <div className="header-right">
 
+          {/* ================================================
+              AGRICULTURE OFFICER QUICK ACCESS
+          ================================================= */}
+
+          {getProfileForRole("officer") && (
+            <button
+              type="button"
+              className="show-dashboard-btn"
+              onClick={() =>
+                navigate(
+                  "/agriculture-officer-dashboard"
+                )
+              }
+            >
+              🌿 Officer Dashboard
+            </button>
+          )}
+
+          {/* ================================================
+              SHOW DASHBOARD BUTTON
+          ================================================= */}
+
           <button
+            type="button"
             className="show-dashboard-btn"
-            onClick={() => setShowDashboard(!showDashboard)}
+            onClick={() =>
+              setShowDashboard(!showDashboard)
+            }
           >
-            {showDashboard ? "Role Selection" : "Show Dashboard"}
+            {showDashboard
+              ? "← Role Selection"
+              : "Show Dashboard"}
           </button>
 
-          <span className="notification">
-            🔔
-          </span>
+          {/* ================================================
+              USER
+          ================================================= */}
 
           <div className="user-profile">
-            👤
+
+            <span>
+              {user?.name ||
+                user?.phone ||
+                "User"}
+            </span>
+
+            <span>
+              👤
+            </span>
+
           </div>
+
+          {/* ================================================
+              LOGOUT
+          ================================================= */}
+
+          <button
+            type="button"
+            className="logout-button"
+            onClick={logout}
+            title="Logout"
+          >
+            <LogOut size={18} />
+          </button>
 
         </div>
 
       </header>
 
-
-      {/* WELCOME - ROLE SELECTION */}
+      {/* =====================================================
+          ROLE SELECTION
+      ===================================================== */}
 
       {!showDashboard && (
-        <section className="welcome">
 
-          <h1>
-            Welcome to AgriSense!
-          </h1>
+        <section className="role-selection-section">
 
-          <p>
-            Choose the option that best describes you.
-          </p>
+          <div className="role-selection-header">
+
+            <p className="role-eyebrow">
+              AGRISENSE · ROLES
+            </p>
+
+            <h1>
+              Choose your role
+            </h1>
+
+            <p>
+              Pick a path to register, or open a
+              dashboard you already use.
+            </p>
+
+          </div>
+
+          <div className="role-selection-grid">
+
+            {roleConfig
+              .filter(
+                (role) => !role.parentCategory
+              )
+              .map((role) => {
+
+                const registered =
+                  getProfileForRole(role.id);
+
+                const Icon = role.icon;
+
+                // =================================================
+                // CATEGORY CARD
+                // =================================================
+
+                if (role.isCategory) {
+
+                  return (
+                    <article
+                      key={role.id}
+                      className="role-card category-card"
+                      onClick={() =>
+                        setModalCategory(role)
+                      }
+                    >
+
+                      <div className="role-card-top">
+
+                        <div
+                          className={`role-card-icon ${role.className}`}
+                        >
+                          <Icon size={24} />
+                        </div>
+
+                      </div>
+
+                      <div className="role-card-content">
+
+                        <h3>
+                          {role.name}
+                        </h3>
+
+                        <p>
+                          {role.description}
+                        </p>
+
+                      </div>
+
+                      <div className="role-card-footer">
+
+                        <button
+                          type="button"
+                          className="view-options-btn"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setModalCategory(role);
+                          }}
+                        >
+                          View options
+                          <ArrowRight size={17} />
+                        </button>
+
+                      </div>
+
+                    </article>
+                  );
+                }
+
+                // =================================================
+                // NORMAL ROLE CARD
+                // =================================================
+
+                return (
+                  <article
+                    key={role.id}
+                    className={`role-card ${
+                      registered
+                        ? "registered"
+                        : "not-registered"
+                    }`}
+                  >
+
+                    <div className="role-card-top">
+
+                      <div
+                        className={`role-card-icon ${role.className}`}
+                      >
+                        <Icon size={24} />
+                      </div>
+
+                      {registered && (
+
+                        <span
+                          className="status-dot registered"
+                          title="Registered"
+                          aria-label="Registered"
+                        >
+                          <CheckCircle2 size={14} />
+                        </span>
+
+                      )}
+
+                    </div>
+
+                    <div className="role-card-content">
+
+                      <h3>
+                        {role.name}
+                      </h3>
+
+                      <p>
+                        {role.description}
+                      </p>
+
+                    </div>
+
+                    <div className="role-card-footer">
+
+                      {registered ? (
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(
+                              role.dashboard
+                            )
+                          }
+                        >
+                          Open dashboard
+                          <ArrowRight size={17} />
+                        </button>
+
+                      ) : (
+
+                        <button
+                          type="button"
+                          className="register-role"
+                          onClick={() =>
+                            navigate(
+                              role.registration
+                            )
+                          }
+                        >
+                          Register this role
+                          <ArrowRight size={17} />
+                        </button>
+
+                      )}
+
+                    </div>
+
+                  </article>
+                );
+              })}
+
+          </div>
 
         </section>
       )}
 
+      {/* =====================================================
+          DASHBOARD VIEW
+      ===================================================== */}
 
-      {/* DASHBOARD VIEW */}
       {showDashboard && (
+
         <section className="dashboard-view-section">
-          <div className="dashboard-user-profile">
-            <div className="profile-avatar-large">
-              👤
-            </div>
-            <div className="profile-info">
-              <h2>{user?.name || user?.phone || "User"}</h2>
-              <p>Your registered roles: {Object.keys(profiles).filter(key => profiles[key]).join(", ")}</p>
-            </div>
+
+          <div className="dashboard-header-content">
+
+            <h1>
+              Your Dashboard
+            </h1>
+
+            <p>
+              Manage your registered roles and
+              access your dashboards
+            </p>
+
           </div>
 
-          <div className="dashboard-summary-cards">
-            <div className="summary-card">
-              <div className="summary-icon">🌾</div>
-              <div>
-                <h3>{profiles.farmer || profiles.landowner ? "Active" : "Not Registered"}</h3>
-                <p>Field Status</p>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">📊</div>
-              <div>
-                <h3>{Object.keys(profiles).filter(key => profiles[key]).length}</h3>
-                <p>Registered Roles</p>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">🏡</div>
-              <div>
-                <h3>{profiles.landowner ? "Yes" : "No"}</h3>
-                <p>Landowner</p>
-              </div>
-            </div>
+          <div className="registered-roles-grid">
+
+            {roleConfig.map((role) => {
+
+              const registered =
+                getProfileForRole(role.id);
+
+              if (!registered) {
+                return null;
+              }
+
+              /*
+               * Category cards such as cultivated-land
+               * do not have their own dashboard.
+               *
+               * We therefore don't show category-only
+               * cards here.
+               */
+
+              if (role.isCategory) {
+                return null;
+              }
+
+              const Icon = role.icon;
+
+              return (
+                <div
+                  key={role.id}
+                  className="registered-role-card"
+                  onClick={() =>
+                    navigate(role.dashboard)
+                  }
+                >
+
+                  <div
+                    className={`role-icon ${role.className}`}
+                  >
+                    <Icon size={32} />
+                  </div>
+
+                  <h3>
+                    {role.name}
+                  </h3>
+
+                  <p>
+                    View your{" "}
+                    {role.name.toLowerCase()}{" "}
+                    dashboard
+                  </p>
+
+                  <div className="role-arrow">
+                    <ArrowRight size={20} />
+                  </div>
+
+                </div>
+              );
+            })}
+
           </div>
 
-          <div className="dashboard-roles-list">
-            <h3>Your Registered Roles</h3>
-            <div className="roles-grid">
-              {profiles.farmer && (
-                <div className="role-badge">
-                  <span className="role-icon">👨‍🌾</span>
-                  <span>Farmer</span>
-                </div>
-              )}
-              {profiles.landowner && (
-                <div className="role-badge">
-                  <span className="role-icon">🏡</span>
-                  <span>Landowner</span>
-                </div>
-              )}
-              {profiles.foreigner && (
-                <div className="role-badge">
-                  <span className="role-icon">🌐</span>
-                  <span>Foreigner</span>
-                </div>
-              )}
-              {profiles.worker && (
-                <div className="role-badge">
-                  <span className="role-icon">👷</span>
-                  <span>Worker</span>
-                </div>
-              )}
-              {profiles.agriculture_officer && (
-                <div className="role-badge">
-                  <span className="role-icon">👨‍💼</span>
-                  <span>Agriculture Officer</span>
-                </div>
-              )}
-              {profiles.terrace && (
-                <div className="role-badge">
-                  <span className="role-icon">🪴</span>
-                  <span>Terrace Farming</span>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* =================================================
+              NO REGISTERED ROLES
+          ================================================= */}
 
-          <div className="dashboard-action-buttons">
-            {profiles.landowner && (
+          {roleConfig.filter(
+            (role) =>
+              !role.isCategory &&
+              getProfileForRole(role.id)
+          ).length === 0 && (
+
+            <div className="no-roles-message">
+
+              <p>
+                You haven't registered for
+                any roles yet.
+              </p>
+
               <button
-                className="go-to-land-dashboard-btn"
-                onClick={() => navigate("/land-dashboard")}
+                type="button"
+                onClick={() =>
+                  setShowDashboard(false)
+                }
               >
-                Go to Land Dashboard
+                Register a Role
               </button>
-            )}
-            {profiles.foreigner && (
-              <button
-                className="go-to-land-dashboard-btn"
-                onClick={() => navigate("/foreign-dashboard")}
-              >
-                Go to Foreigner Dashboard
-              </button>
-            )}
-            {profiles.worker && (
-              <button
-                className="go-to-land-dashboard-btn"
-                onClick={() => navigate("/worker-dashboard")}
-              >
-                Go to Worker Dashboard
-              </button>
-            )}
-            {profiles.agriculture_officer && (
-              <button
-                className="go-to-land-dashboard-btn"
-                onClick={() => navigate("/agriculture-officer-dashboard")}
-              >
-                Go to Agriculture Officer Dashboard
-              </button>
-            )}
-          </div>
+
+            </div>
+
+          )}
+
         </section>
       )}
 
+      {/* =====================================================
+          DASHBOARD BOTTOM CARD
+      ===================================================== */}
 
-      {/* OPTIONS - ROLE SELECTION */}
+      {showDashboard && (
 
-      {!showDashboard && (
-        <section className="dashboard-options">
+        <section className="dashboard-bottom">
 
-        {/* FIELD */}
+          <div className="dashboard-info-card">
 
-        <button
-          className="dashboard-card"
-          onClick={() => setShowFieldSubOptions(!showFieldSubOptions)}
-        >
+            <div className="info-card-icon">
 
-          <div className="card-icon">
-            �
-          </div>
+              <LayoutDashboard size={23} />
 
-          <h3>
-            Field
-          </h3>
+            </div>
 
-          <p>
-            Manage agricultural fields
-          </p>
+            <div>
 
-          <span className="card-arrow">
-            {showFieldSubOptions ? "↓" : "→"}
-          </span>
+              <h3>
+                Need another role?
+              </h3>
 
-        </button>
+              <p>
+                You can register multiple roles
+                and access each dashboard
+                independently.
+              </p>
 
-        {/* FIELD SUB-OPTIONS */}
-
-        {showFieldSubOptions && (
-          <div className="field-sub-options">
-            <button
-              className="sub-option-card"
-              onClick={() => navigate("/farmer-registration")}
-            >
-              <div className="card-icon">
-                👨‍🌾
-              </div>
-              <h3>Farmer</h3>
-              <p>Register as a farmer</p>
-              <span className="card-arrow">→</span>
-            </button>
+            </div>
 
             <button
-              className="sub-option-card"
-              onClick={() => navigate("/landowner-registration")}
+              type="button"
+              onClick={() =>
+                setShowDashboard(false)
+              }
             >
-              <div className="card-icon">
-                🏡
-              </div>
-              <h3>Landowner</h3>
-              <p>Register as a landowner</p>
-              <span className="card-arrow">→</span>
+              Explore roles
+
+              <ArrowRight size={17} />
+
             </button>
-          </div>
-        )}
 
-
-        {/* FOREIGNERS */}
-
-        <button
-          className="dashboard-card"
-          onClick={() => navigate("/foreigner-registration")}
-        >
-
-          <div className="card-icon">
-            🌍
           </div>
 
-          <h3>
-            Foreigners
-          </h3>
-
-          <p>
-            Agriculture information and services
-          </p>
-
-          <span className="card-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        {/* WORKER */}
-
-        <button
-          className="dashboard-card"
-          onClick={() => navigate("/worker-registration")}
-        >
-
-          <div className="card-icon">
-            👨‍🌾
-          </div>
-
-          <h3>
-            Worker
-          </h3>
-
-          <p>
-            Agricultural work and opportunities
-          </p>
-
-          <span className="card-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        {/* AGRICULTURE OFFICER */}
-
-        <button
-          className="dashboard-card"
-          onClick={() => navigate("/agriculture-officer-registration")}
-        >
-
-          <div className="card-icon">
-            �
-          </div>
-
-          <h3>
-            Agriculture Officer
-          </h3>
-
-          <p>
-            Agricultural support and monitoring
-          </p>
-
-          <span className="card-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        {/* TERRACE FARMING */}
-
-        <button
-          className="dashboard-card"
-          onClick={() => navigate("/terrace-farming")}
-        >
-
-          <div className="card-icon">
-            🪴
-          </div>
-
-          <h3>
-            Terrace Farming
-          </h3>
-
-          <p>
-            Manage terrace and home farming
-          </p>
-
-          <span className="card-arrow">
-            →
-          </span>
-
-        </button>
-
-      </section>
+        </section>
       )}
 
+      {/* =====================================================
+          CATEGORY MODAL
+      ===================================================== */}
 
-      {/* INFORMATION */}
+      {modalCategory && (
 
-      <section className="dashboard-info">
+        <div
+          className="modal-overlay"
+          onClick={() =>
+            setModalCategory(null)
+          }
+        >
 
-        <h2>
-          Smart Farming with AgriSense
-        </h2>
+          <div
+            className="modal-content"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
 
-        <p>
-          Select Field to manage agricultural land or
-          choose Terrace Farming for home and terrace cultivation.
-        </p>
+            {/* =============================================
+                MODAL HEADER
+            ============================================== */}
 
-      </section>
+            <div className="modal-header">
+
+              <div className="modal-title">
+
+                <div
+                  className={`modal-icon ${modalCategory.className}`}
+                >
+                  {React.createElement(
+                    modalCategory.icon,
+                    { size: 28 }
+                  )}
+                </div>
+
+                <div>
+
+                  <h2>
+                    {modalCategory.name}
+                  </h2>
+
+                  <p>
+                    {modalCategory.description}
+                  </p>
+
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() =>
+                  setModalCategory(null)
+                }
+              >
+                <X size={24} />
+              </button>
+
+            </div>
+
+            {/* =============================================
+                MODAL BODY
+            ============================================== */}
+
+            <div className="modal-body">
+
+              <div className="modal-sub-roles">
+
+                {roleConfig
+                  .filter(
+                    (subRole) =>
+                      subRole.parentCategory ===
+                      modalCategory.id
+                  )
+                  .map((subRole) => {
+
+                    const subRegistered =
+                      getProfileForRole(
+                        subRole.id
+                      );
+
+                    const SubIcon =
+                      subRole.icon;
+
+                    return (
+                      <article
+                        key={subRole.id}
+                        className={`modal-sub-role-card ${
+                          subRegistered
+                            ? "registered"
+                            : "not-registered"
+                        }`}
+                      >
+
+                        <div
+                          className={`modal-sub-role-icon ${subRole.className}`}
+                        >
+                          <SubIcon size={24} />
+                        </div>
+
+                        <div className="modal-sub-role-content">
+
+                          <h3>
+                            {subRole.name}
+                          </h3>
+
+                          <p>
+                            {subRole.description}
+                          </p>
+
+                          {subRegistered ? (
+
+                            <span className="status-badge registered-badge">
+
+                              <CheckCircle2
+                                size={12}
+                              />
+
+                              Registered
+
+                            </span>
+
+                          ) : (
+
+                            <span className="status-badge">
+                              Not registered
+                            </span>
+
+                          )}
+
+                        </div>
+
+                        <div className="modal-sub-role-action">
+
+                          {subRegistered ? (
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(
+                                  subRole.dashboard
+                                )
+                              }
+                            >
+                              Open dashboard
+                              <ArrowRight
+                                size={16}
+                              />
+                            </button>
+
+                          ) : (
+
+                            <button
+                              type="button"
+                              className="register-role"
+                              onClick={() =>
+                                navigate(
+                                  subRole.registration
+                                )
+                              }
+                            >
+                              Register
+                              <ArrowRight
+                                size={16}
+                              />
+                            </button>
+
+                          )}
+
+                        </div>
+
+                      </article>
+                    );
+                  })}
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );

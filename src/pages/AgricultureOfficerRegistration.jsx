@@ -2,205 +2,163 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./RoleRegistration.css";
 
+const API_BASE = (
+  import.meta?.env?.VITE_API_BASE_URL ||
+  "http://localhost:5000"
+).replace(/\/$/, "");
 
 function AgricultureOfficerRegistration() {
-
   const navigate = useNavigate();
 
-
   const [formData, setFormData] = useState({
-
     fullName: "",
     employeeId: "",
     department: "",
     designation: "",
     district: "",
-    officeAddress: ""
-
+    officeAddress: "",
   });
 
-
   const handleChange = (event) => {
-
-    const {
-      name,
-      value
-    } = event.target;
-
+    const { name, value } = event.target;
 
     setFormData({
-
       ...formData,
-
-      [name]: value
-
+      [name]: value,
     });
-
   };
 
-
   const handleSubmit = async (event) => {
-
     event.preventDefault();
 
-
     if (
-
       !formData.fullName ||
-
       !formData.employeeId ||
-
       !formData.department ||
-
       !formData.district
-
     ) {
-
-      alert(
-
-        "Please fill all required fields."
-
-      );
-
-
+      alert("Please fill all required fields.");
       return;
-
     }
 
-
     try {
-
       const userStr = localStorage.getItem("agrisenseUser");
 
       if (!userStr) {
-
         alert("User not logged in. Please log in first.");
-
         navigate("/login");
-
         return;
-
       }
 
       const user = JSON.parse(userStr);
 
-
       const payload = {
-
         user_id: user.id,
-
         full_name: formData.fullName,
-
         employee_id: formData.employeeId,
-
         department: formData.department,
-
         designation: formData.designation || null,
-
         phone: user.phone,
-
         email: user.email || null,
-
         district: formData.district,
-
-        office_address: formData.officeAddress || null
-
+        office_address: formData.officeAddress || null,
       };
 
-
       const response = await fetch(
-
-        "http://localhost:5000/api/profiles/agriculture-officer",
-
+        `${API_BASE}/api/profiles/agriculture-officer`,
         {
-
           method: "POST",
-
           headers: {
-
             "Content-Type": "application/json",
-
           },
-
-          body: JSON.stringify(payload)
-
+          body: JSON.stringify(payload),
         }
-
       );
-
 
       const data = await response.json();
 
-
       if (!response.ok) {
-
         alert(data.detail || "Officer registration failed.");
-
         return;
-
       }
 
+      /*
+       * IMPORTANT:
+       * Keep the user on the main Dashboard after registration.
+       * The Dashboard will now recognize the officer registration and
+       * show "Open dashboard" on the Agriculture Officer card.
+       */
+      localStorage.setItem("agricultureOfficerRegistered", "true");
+      localStorage.setItem("agrisenseRole", "agriculture-officer");
+      localStorage.setItem("showDashboardAfterRegistration", "true");
+
+      /*
+       * Store the officer profile locally as a fallback so the role
+       * remains visible even if the profile GET request is temporarily
+       * stale or unavailable.
+       */
+      try {
+        const existingProfiles = JSON.parse(
+          localStorage.getItem("agrisenseProfiles") || "{}"
+        );
+
+        const normalizedProfiles =
+          Array.isArray(existingProfiles)
+            ? {
+                officer: true,
+                agriculture_officer: true,
+              }
+            : {
+                ...existingProfiles,
+                officer: true,
+                agriculture_officer: true,
+              };
+
+        localStorage.setItem(
+          "agrisenseProfiles",
+          JSON.stringify(normalizedProfiles)
+        );
+      } catch {
+        localStorage.setItem(
+          "agrisenseProfiles",
+          JSON.stringify({
+            officer: true,
+            agriculture_officer: true,
+          })
+        );
+      }
 
       alert(
-
         "Agriculture officer registration completed successfully!"
-
       );
 
-
-      localStorage.setItem("showDashboardAfterRegistration", "true");
-      navigate("/agriculture-officer-dashboard");
-
-
+      // Go to the main dashboard, NOT directly to the officer dashboard.
+      navigate("/dashboard");
     } catch (error) {
-
       console.error("Error creating officer profile:", error);
-
       alert("Unable to connect to the server. Please try again.");
-
     }
-
   };
 
-
   return (
-
     <div className="registration-page">
-
       <div className="registration-card">
-
-
         <button
           type="button"
           className="registration-back"
-          onClick={() =>
-            navigate("/dashboard")
-          }
+          onClick={() => navigate("/dashboard")}
         >
           ← Back
         </button>
 
-
-        <h1>
-          👨‍💼 Agriculture Officer
-        </h1>
-
+        <h1>👨‍💼 Agriculture Officer</h1>
 
         <p className="registration-subtitle">
           Enter your official details
         </p>
 
-
-        <form
-          className="registration-form"
-          onSubmit={handleSubmit}
-        >
-
-
-          <label>
-            Full Name *
-          </label>
-
+        <form className="registration-form" onSubmit={handleSubmit}>
+          <label>Full Name *</label>
           <input
             type="text"
             name="fullName"
@@ -209,11 +167,7 @@ function AgricultureOfficerRegistration() {
             onChange={handleChange}
           />
 
-
-          <label>
-            Employee ID *
-          </label>
-
+          <label>Employee ID *</label>
           <input
             type="text"
             name="employeeId"
@@ -222,11 +176,7 @@ function AgricultureOfficerRegistration() {
             onChange={handleChange}
           />
 
-
-          <label>
-            Department *
-          </label>
-
+          <label>Department *</label>
           <input
             type="text"
             name="department"
@@ -235,11 +185,7 @@ function AgricultureOfficerRegistration() {
             onChange={handleChange}
           />
 
-
-          <label>
-            Designation
-          </label>
-
+          <label>Designation</label>
           <input
             type="text"
             name="designation"
@@ -248,12 +194,7 @@ function AgricultureOfficerRegistration() {
             onChange={handleChange}
           />
 
-
-
-          <label>
-            District *
-          </label>
-
+          <label>District *</label>
           <input
             type="text"
             name="district"
@@ -262,11 +203,7 @@ function AgricultureOfficerRegistration() {
             onChange={handleChange}
           />
 
-
-          <label>
-            Office Address
-          </label>
-
+          <label>Office Address</label>
           <textarea
             name="officeAddress"
             placeholder="Enter office address"
@@ -274,24 +211,16 @@ function AgricultureOfficerRegistration() {
             onChange={handleChange}
           />
 
-
           <button
             type="submit"
             className="registration-submit"
           >
             Complete Registration
           </button>
-
-
         </form>
-
       </div>
-
     </div>
-
   );
-
 }
-
 
 export default AgricultureOfficerRegistration;

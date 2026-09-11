@@ -32,7 +32,7 @@ import "./ForeignDashboard.css";
 const ForeignDashboard = () => {
   const [lands, setLands] = useState([]);
   const [user, setUser] = useState({
-    name: "Foreign Landowner",
+    name: "Foreign Rented",
     role: "Foreign User",
   });
 
@@ -365,7 +365,7 @@ const ForeignDashboard = () => {
                 <div className="foreign-profile-info">
                   <strong>
                     {user.name ||
-                      "Foreign Landowner"}
+                      "Foreign Rented"}
                   </strong>
 
                   <small>
@@ -382,7 +382,7 @@ const ForeignDashboard = () => {
                   <div>
                     <strong>
                       {user.name ||
-                        "Foreign Landowner"}
+                        "Foreign Rented"}
                     </strong>
 
                     <span>

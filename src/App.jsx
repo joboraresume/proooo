@@ -4,23 +4,21 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  Navigate
+  Navigate,
 } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
-
 import Dashboard from "./pages/Dashboard";
-
+import FarmDashboard from "./pages/FarmDashboard";
 
 import FarmerRegistration from "./pages/FarmerRegistration";
 import LandownerRegistration from "./pages/LandownerRegistration";
 import ForeignerRegistration from "./pages/ForeignerRegistration";
 import WorkerRegistration from "./pages/WorkerRegistration";
 import AgricultureOfficerRegistration from "./pages/AgricultureOfficerRegistration";
-
 import TerraceRegistration from "./pages/TerraceRegistration";
 
 import LandDashboard from "./pages/LandDashboard";
@@ -32,13 +30,9 @@ import AgricultureOfficerDashboard from "./pages/AgriculureofficerDashboard";
 
 import "./App.css";
 
-
 function App() {
-
   return (
-
     <BrowserRouter>
-
       <Routes>
 
         {/* ================= HOME ================= */}
@@ -74,6 +68,16 @@ function App() {
           element={<FarmerRegistration />}
         />
 
+        {/* IMPORTANT:
+            RoleSelection uses /land-registration
+        */}
+        <Route
+          path="/land-registration"
+          element={<LandownerRegistration />}
+        />
+
+        {/* Keep old route also working so existing links
+            from your teammates do not break */}
         <Route
           path="/landowner-registration"
           element={<LandownerRegistration />}
@@ -100,7 +104,7 @@ function App() {
         />
 
 
-        {/* ================= DASHBOARD ================= */}
+        {/* ================= MAIN DASHBOARD ================= */}
 
         <Route
           path="/dashboard"
@@ -108,7 +112,15 @@ function App() {
         />
 
 
-        {/* ================= LAND DASHBOARD ================= */}
+        {/* ================= FARMER DASHBOARD ================= */}
+
+        <Route
+          path="/farmer-dashboard"
+          element={<FarmDashboard roleType="farmer" />}
+        />
+
+
+        {/* ================= LANDOWNER DASHBOARD ================= */}
 
         <Route
           path="/land-dashboard"
@@ -152,11 +164,8 @@ function App() {
         />
 
       </Routes>
-
     </BrowserRouter>
-
   );
-
 }
 
 export default App;
