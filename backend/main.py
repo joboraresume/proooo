@@ -315,40 +315,30 @@ class TerraceProfileRequest(BaseModel):
 # REGISTER - SEND OTP
 # ============================================================
 
-@app.post(
-    "/api/auth/register/send-otp"
-)
+@app.post("/api/auth/register/send-otp")
 def register_send_otp(
     request: RegisterRequest,
     db: Session = Depends(get_db)
 ):
 
     email = request.email.lower().strip()
-
     phone = request.phone.strip()
-
 
     # --------------------------------------------------------
     # BASIC VALIDATION
     # --------------------------------------------------------
 
     if len(request.password) < 6:
-
         raise HTTPException(
             status_code=400,
-            detail=
-            "Password must contain at least 6 characters."
+            detail="Password must contain at least 6 characters."
         )
-
 
     if not phone.isdigit() or len(phone) != 10:
-
         raise HTTPException(
             status_code=400,
-            detail=
-            "Phone number must contain exactly 10 digits."
+            detail="Phone number must contain exactly 10 digits."
         )
-
 
     # --------------------------------------------------------
     # CHECK EXISTING EMAIL
@@ -356,24 +346,9 @@ def register_send_otp(
 
     existing_email = (
         db.query(User)
-        .filter(
-            User.email == email
-        )
+        .filter(User.email == email)
         .first()
     )
-
-
-    if (
-        existing_email
-        and existing_email.verified
-    ):
-
-        raise HTTPException(
-            status_code=400,
-            detail=
-            "This email is already registered."
-        )
-
 
     # --------------------------------------------------------
     # CHECK EXISTING PHONE
@@ -381,24 +356,43 @@ def register_send_otp(
 
     existing_phone = (
         db.query(User)
-        .filter(
-            User.phone == phone
-        )
+        .filter(User.phone == phone)
         .first()
     )
 
+    # --------------------------------------------------------
+    # EMAIL ALREADY VERIFIED
+    # --------------------------------------------------------
+
+    if existing_email and existing_email.verified:
+        raise HTTPException(
+            status_code=400,
+            detail="This email is already registered."
+        )
+
+    # --------------------------------------------------------
+    # PHONE ALREADY VERIFIED
+    # --------------------------------------------------------
+
+    if existing_phone and existing_phone.verified:
+        raise HTTPException(
+            status_code=400,
+            detail="This phone number is already registered."
+        )
+
+    # --------------------------------------------------------
+    # PHONE BELONGS TO A DIFFERENT ACCOUNT
+    # --------------------------------------------------------
 
     if (
         existing_phone
-        and existing_phone.verified
+        and existing_email
+        and existing_phone.id != existing_email.id
     ):
-
         raise HTTPException(
             status_code=400,
-            detail=
-            "This phone number is already registered."
+            detail="This phone number is already linked to another account."
         )
-
 
     # --------------------------------------------------------
     # GENERATE OTP
@@ -406,10 +400,8 @@ def register_send_otp(
 
     otp = generate_otp()
 
-
     # --------------------------------------------------------
-    # IF UNVERIFIED ACCOUNT ALREADY EXISTS
-    # UPDATE IT
+    # UPDATE EXISTING UNVERIFIED ACCOUNT
     # --------------------------------------------------------
 
     if existing_email:
@@ -417,43 +409,48 @@ def register_send_otp(
         user = existing_email
 
         user.name = request.name
-
         user.phone = phone
-
-        user.password = hash_password(
-            request.password
-        )
-
+        user.password = hash_password(request.password)
         user.verification_otp = otp
-
         user.verified = False
 
+    # --------------------------------------------------------
+    # CREATE NEW ACCOUNT
+    # --------------------------------------------------------
 
     else:
 
         user = User(
-
             name=request.name,
-
             phone=phone,
-
             email=email,
-
-            password=hash_password(
-                request.password
-            ),
-
+            password=hash_password(request.password),
             verified=False,
-
             verification_otp=otp
-
         )
 
         db.add(user)
 
+    # --------------------------------------------------------
+    # SAVE DATABASE
+    # --------------------------------------------------------
 
-    db.commit()
+    try:
+        db.commit()
+        db.refresh(user)
 
+    except Exception as error:
+
+        db.rollback()
+
+        print("====================================================")
+        print("DATABASE ERROR:", error)
+        print("====================================================")
+
+        raise HTTPException(
+            status_code=500,
+            detail="Could not create registration account."
+        )
 
     # --------------------------------------------------------
     # SEND OTP TO EMAIL
@@ -467,29 +464,35 @@ def register_send_otp(
             "registration"
         )
 
+        print("====================================================")
+        print("REGISTRATION OTP EMAIL SENT")
+        print("TO:", email)
+        print("====================================================")
+
+        return {
+            "success": True,
+            "email_sent": True,
+            "message": "OTP sent to your registered email."
+        }
+
     except Exception as error:
 
-        print(
-            "EMAIL ERROR:",
-            error
-        )
+        # Development/testing fallback.
+        # The OTP is printed in the backend terminal only.
+        print("====================================================")
+        print("EMAIL ERROR:", error)
+        print("EMAIL COULD NOT BE SENT.")
+        print("FOR TESTING ONLY - YOUR OTP IS:", otp)
+        print("====================================================")
 
-        raise HTTPException(
-            status_code=500,
-            detail=
-            "Could not send OTP email. "
-            "Check your .env email settings."
-        )
-
-
-    return {
-
-        "success": True,
-
-        "message":
-        "OTP sent to your registered email."
-
-    }
+        return {
+            "success": True,
+            "email_sent": False,
+            "message": (
+                "OTP email could not be sent. "
+                "For testing, check the backend terminal for your OTP."
+            )
+        }
 
 
 # ============================================================
