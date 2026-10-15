@@ -31,9 +31,13 @@ import {
   Mountain,
 } from "lucide-react";
 
+<<<<<<< HEAD
 import { subscribeSensorReadings, subscribeLiveSensors } from "../services/sensorservice";
+=======
+>>>>>>> a14f7c100e58b059d90a93f072994e087a6aeef6
 import FarmMap from "../components/FarmMap";
 import "./FarmDashboard.css";
+import { subscribeEnvironment } from "../services/sensorservice";
 
 const FARMER_FIELDS_KEY = "agrisenseFarmerFields";
 

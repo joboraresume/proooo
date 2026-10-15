@@ -7,12 +7,19 @@ import {
   AlertCircle, Loader2, CheckCircle,
 } from "lucide-react";
 
+<<<<<<< HEAD
 import { subscribeSensorReadings, subscribeLiveSensors } from "../services/sensorservice";
 import { subscribeFields, addField } from "../services/fieldService";
 
 import {
   subscribeWorkers,
   
+=======
+import { subscribeFields, addField } from "../services/fieldService";
+import { subscribeSensorReadings } from "../services/sensorService";
+import {
+  subscribeWorkers,
+>>>>>>> a14f7c100e58b059d90a93f072994e087a6aeef6
   subscribeOwnerWorkerRequests,
   sendWorkerConnectionRequest,
 } from "../services/workerService";
@@ -163,7 +170,10 @@ const ForeignDashboard = () => {
   const [lands, setLands] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [sensorData, setSensorData] = useState({});
+<<<<<<< HEAD
   const [liveSensor, setLiveSensor] = useState(null);  
+=======
+>>>>>>> a14f7c100e58b059d90a93f072994e087a6aeef6
   const [workers, setWorkers] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -221,7 +231,10 @@ const ForeignDashboard = () => {
     return () => unsub?.();
   }, []);
 
+<<<<<<< HEAD
   
+=======
+>>>>>>> a14f7c100e58b059d90a93f072994e087a6aeef6
   useEffect(() => {
     if (!userId) return undefined;
     const unsub = subscribeOwnerWorkerRequests(userId, setRequests, (e) =>
@@ -229,6 +242,7 @@ const ForeignDashboard = () => {
     );
     return () => unsub?.();
   }, [userId]);
+<<<<<<< HEAD
 useEffect(() => {
     const unsub = subscribeLiveSensors(setLiveSensor, (e) =>
       console.error("Live sensor error:", e)
@@ -236,6 +250,9 @@ useEffect(() => {
     return () => unsub?.();
   }, []);
   
+=======
+
+>>>>>>> a14f7c100e58b059d90a93f072994e087a6aeef6
   useEffect(() => {
     if (!notice) return undefined;
     const t = setTimeout(() => setNotice(null), 4500);
@@ -245,10 +262,15 @@ useEffect(() => {
   /* ---- Derived data ---- */
 
   const selectedLand = lands.find((l) => l.id === selectedId) || lands[0] || null;
+<<<<<<< HEAD
   const latestReading = (id) => (sensorData[id] || [])[0] || liveSensor;
   const values = extractSensorValues(
     selectedLand ? latestReading(selectedLand.id) : liveSensor
   );
+=======
+  const latestReading = (id) => (sensorData[id] || [])[0] || null;
+  const values = extractSensorValues(selectedLand ? latestReading(selectedLand.id) : null);
+>>>>>>> a14f7c100e58b059d90a93f072994e087a6aeef6
   const health = calculateHealth(values);
   const live = isRecent(values.reading);
 

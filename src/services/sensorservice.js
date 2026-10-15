@@ -108,6 +108,7 @@ export const subscribeSensorReadings = (
     (snapshot) => onUpdate(toReadingList(snapshot)),
     (error) => onError?.(error)
   );
+<<<<<<< HEAD
 };
 export const subscribeLiveSensors = (onUpdate, onError) =>
   onValue(
@@ -125,3 +126,6 @@ export const subscribeLiveSensors = (onUpdate, onError) =>
     },
     (e) => onError?.(e)
   );
+=======
+};
+>>>>>>> a14f7c100e58b059d90a93f072994e087a6aeef6
