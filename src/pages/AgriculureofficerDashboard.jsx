@@ -35,17 +35,21 @@ import {
 } from "lucide-react";
 
 import "./AgricultureofficerDashboard.css";
+import { subscribeLiveSensors } from "../services/sensorservice";
+const fmt = (v, unit = "") =>
+  v === null || v === undefined || v === "" ? "--" : `${v}${unit}`;
 
-/** Demo sensor values — replace when real sensors are connected */
-const DEMO_SENSORS = {
-  connected: true,
-  source: "Demo field sensors",
-  temperature: "28.4°C",
-  humidity: "71%",
-  soilPh: "6.7",
-  moisture: "62%",
-  updatedAt: "Just now",
-};
+const buildSensorSummary = (live) => ({
+  connected: Boolean(live),
+  source: "Live field sensors",
+  temperature: fmt(live?.temperature, "°C"),
+  humidity: fmt(live?.humidity, "%"),
+  soilPh: fmt(live?.ph ?? live?.soilPh),
+  moisture: fmt(live?.moisture ?? live?.soilMoisture, "%"),
+  updatedAt: live?.timestamp
+    ? new Date(live.timestamp).toLocaleTimeString()
+    : "--",
+});
 
 const navItems = [
   { label: "Dashboard", icon: Home, sectionId: "officer-top" },
@@ -273,6 +277,16 @@ const AgricultureOfficerDashboard = () => {
   const [notifications, setNotifications] = useState(3);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+    const [liveSensor, setLiveSensor] = useState(null);
+
+  useEffect(() => {
+    const unsub = subscribeLiveSensors(setLiveSensor, (e) =>
+      console.error("Live sensor error:", e)
+    );
+    return () => unsub?.();
+  }, []);
+
+  const sensors = useMemo(() => buildSensorSummary(liveSensor), [liveSensor]);
   const [user, setUser] = useState(null);
   const [officerProfile, setOfficerProfile] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -329,7 +343,7 @@ const AgricultureOfficerDashboard = () => {
         officerProfile?.department ||
         officerProfile?.designation ||
         "Agriculture Department",
-      sensors: DEMO_SENSORS,
+      sensors: sensors,
     });
     setGeneratedReport(report);
     setShowReportModal(true);
@@ -612,33 +626,33 @@ const AgricultureOfficerDashboard = () => {
           </div>
         </header>
 
-        {/* Demo sensor connection — replace DEMO_SENSORS when hardware is live */}
+        {/* Demo sensor connection — replace sensors when hardware is live */}
         <section className="officer-sensor-strip" aria-label="Sensor status">
-          <span className={`officer-sensor-pill ${DEMO_SENSORS.connected ? "live" : "demo"}`}>
+          <span className={`officer-sensor-pill ${sensors.connected ? "live" : "demo"}`}>
             <Activity size={13} />
-            {DEMO_SENSORS.connected ? "Sensors connected" : "Sensors offline"}
+            {sensors.connected ? "Sensors connected" : "Sensors offline"}
           </span>
           <span className="officer-sensor-pill demo">
             Demo data
           </span>
           <span className="officer-sensor-pill">
             <Thermometer size={13} />
-            {DEMO_SENSORS.temperature}
+            {sensors.temperature}
           </span>
           <span className="officer-sensor-pill">
             <Droplets size={13} />
-            {DEMO_SENSORS.moisture}
+            {sensors.moisture}
           </span>
           <span className="officer-sensor-pill">
             <CloudSun size={13} />
-            {DEMO_SENSORS.humidity}
+            {sensors.humidity}
           </span>
           <span className="officer-sensor-pill">
             <Waves size={13} />
-            pH {DEMO_SENSORS.soilPh}
+            pH {sensors.soilPh}
           </span>
           <span className="officer-sensor-meta">
-            {DEMO_SENSORS.source} · Updated {DEMO_SENSORS.updatedAt}
+            {sensors.source} · Updated {sensors.updatedAt}
           </span>
         </section>
 
@@ -1314,7 +1328,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Temperature</span>
-                <strong>{DEMO_SENSORS.temperature}</strong>
+                <strong>{sensors.temperature}</strong>
 
               </div>
 
@@ -1325,7 +1339,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Humidity</span>
-                <strong>{DEMO_SENSORS.humidity}</strong>
+                <strong>{sensors.humidity}</strong>
 
               </div>
 
@@ -1336,7 +1350,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Soil pH</span>
-                <strong>{DEMO_SENSORS.soilPh}</strong>
+                <strong>{sensors.soilPh}</strong>
 
               </div>
 
@@ -1347,7 +1361,7 @@ const AgricultureOfficerDashboard = () => {
                 </div>
 
                 <span>Moisture</span>
-                <strong>{DEMO_SENSORS.moisture}</strong>
+                <strong>{sensors.moisture}</strong>
 
               </div>
 

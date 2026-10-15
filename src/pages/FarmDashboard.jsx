@@ -31,7 +31,7 @@ import {
   Mountain,
 } from "lucide-react";
 
-import { subscribeSensorReadings } from "../services/sensorservice";
+import { subscribeSensorReadings, subscribeLiveSensors } from "../services/sensorservice";
 import FarmMap from "../components/FarmMap";
 import "./FarmDashboard.css";
 
@@ -205,6 +205,7 @@ function FarmDashboard({ roleType = "rented" }) {
   const [fieldsToDelete, setFieldsToDelete] = useState([]);
   const [deletingFields, setDeletingFields] = useState(false);
   const [sensorData, setSensorData] = useState([]);
+  const [liveSensor, setLiveSensor] = useState(null);   // ← add
   const [sensorsConnected, setSensorsConnected] = useState(false);
   const [sensorError, setSensorError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -288,7 +289,12 @@ function FarmDashboard({ roleType = "rented" }) {
 
     return unsubscribe;
   }, [user?.id, selectedFieldId, isFarmer]);
-
+  useEffect(() => {
+    const unsub = subscribeLiveSensors(setLiveSensor, (e) =>
+      console.error("Live sensor error:", e)
+    );
+    return () => unsub?.();
+  }, []);
   const loadAll = async () => {
     setLoading(true);
     await loadProfile();
@@ -346,8 +352,9 @@ function FarmDashboard({ roleType = "rented" }) {
     }
   };
 
-  const latest = sensorData[0] || {};
-  const hasSensorReading = sensorData.length > 0;
+    const readings = sensorData.length ? sensorData : liveSensor ? [liveSensor] : [];
+  const latest = readings[0] || {};
+  const hasSensorReading = readings.length > 0;
 
   const temperature = firstValue(latest, [
     "temperature",
@@ -365,7 +372,7 @@ function FarmDashboard({ roleType = "rented" }) {
   const waterPh = firstValue(latest, ["waterPH", "water_ph"]);
 
   const moistureTrend = useMemo(() => {
-    const values = sensorData
+    const values = readings
       .slice(0, 7)
       .reverse()
       .map((row) =>
@@ -376,7 +383,7 @@ function FarmDashboard({ roleType = "rented" }) {
       .filter((value) => Number.isFinite(value));
 
     return values.length ? values : [];
-  }, [sensorData]);
+  }, [readings]);
 
   const selectedField = useMemo(
     () => farmerFields.find((f) => f.id === selectedFieldId) || null,
@@ -756,7 +763,7 @@ function FarmDashboard({ roleType = "rented" }) {
               </span>
               <span className="fd-pill">
                 <Activity size={13} />
-                {sensorError
+                 {sensorError && !hasSensorReading
                   ? "Sensors offline"
                   : hasSensorReading
                   ? "Live sensors"

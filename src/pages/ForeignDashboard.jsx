@@ -1,1064 +1,689 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Home,
-  Map,
-  Radio,
-  FileText,
-  BarChart3,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Bell,
-  ChevronDown,
-  Globe2,
-  Sprout,
-  MapPin,
-  Thermometer,
-  Droplets,
-  Wind,
-  FlaskConical,
-  Download,
-  AlertTriangle,
-  Headphones,
-  Plus,
-  Activity,
-  CloudSun,
-  Leaf,
-  X,
+  LayoutDashboard, MapPin, Cpu, Radio, Leaf, Droplet, FlaskConical, Sprout,
+  Users, Phone, PawPrint, Bell, FileText, TrendingUp, Bot, Settings, LogOut,
+  Search, ChevronRight, ChevronDown, Camera, Waves, HeartPulse, Thermometer,
+  Droplets, CloudRain, AlertTriangle, Send, Clock, Calendar, User, Plus, X,
+  AlertCircle, Loader2, CheckCircle,
 } from "lucide-react";
+
+import { subscribeSensorReadings, subscribeLiveSensors } from "../services/sensorservice";
+import { subscribeFields, addField } from "../services/fieldService";
+
+import {
+  subscribeWorkers,
+  
+  subscribeOwnerWorkerRequests,
+  sendWorkerConnectionRequest,
+} from "../services/workerService";
 
 import "./ForeignDashboard.css";
 
-const ForeignDashboard = () => {
-  const [lands, setLands] = useState([]);
-  const [user, setUser] = useState({
-    name: "Foreign Rented",
-    role: "Foreign User",
+/* ---------------- CONSTANTS / HELPERS ---------------- */
+
+const RANGES = {
+  temperature: [15, 35],
+  moisture: [40, 80],
+  humidity: [40, 85],
+  ph: [5.5, 7.5],
+};
+const LABELS = {
+  temperature: "Temperature",
+  moisture: "Soil moisture",
+  humidity: "Humidity",
+  ph: "Soil pH",
+};
+const SOIL_TYPES = ["Clay", "Sandy", "Loamy", "Silty", "Red soil", "Black soil", "Laterite", "Other"];
+const TASKS = ["Fertilizer Application", "Irrigation", "Grass Removal", "Pest Control", "Harvesting"];
+const EMPTY_FORM = {
+  fieldName: "", area: "", cropType: "", soilType: "", country: "", state: "",
+  district: "", city: "", address: "", latitude: "", longitude: "", sensorDeviceId: "",
+};
+const MENU = [
+  ["Dashboard", LayoutDashboard, "top"], ["My Lands", MapPin, "lands"],
+  ["Machine Monitoring", Cpu, "machine"], ["Live Sensor Data", Radio, "sensors"],
+  ["Crop Health", Leaf, "sensors"], ["Smart Irrigation", Droplet, "machine"],
+  ["Soil Analysis", FlaskConical, "sensors"], ["Crop Recommendation", Sprout, "lands"],
+  ["Farmer & Tasks", Users, "tasks"], ["Call / Assign", Phone, "tasks"],
+  ["Wildlife Monitor", PawPrint, "alerts"], ["Notifications", Bell, "alerts"],
+  ["Reports", FileText, "report"], ["Market & Profit", TrendingUp, "top"],
+  ["AI Assistant", Bot, "top"],
+];
+
+const readStoredUser = () => {
+  try { return JSON.parse(localStorage.getItem("agrisenseUser")); } catch { return null; }
+};
+const hasValue = (v) => v !== null && v !== undefined && v !== "";
+const pick = (src, keys) => {
+  if (!src) return null;
+  for (const k of keys) if (hasValue(src[k])) return src[k];
+  return null;
+};
+const getFieldName = (l) => l?.landName || l?.fieldName || l?.name || "Unnamed Field";
+const getArea = (l) => Number(l?.area || l?.acres || l?.landArea || 0);
+const getLocationText = (l) => {
+  const parts = [l?.city, l?.district, l?.state, l?.country].filter(Boolean);
+  return parts.length ? parts.join(", ") : l?.address || l?.location || "Location not available";
+};
+const getCoordinates = (l) => {
+  const lat = l?.latitude ?? l?.lat ?? l?.location?.latitude;
+  const lng = l?.longitude ?? l?.lng ?? l?.lon ?? l?.location?.longitude;
+  return hasValue(lat) && hasValue(lng) ? { latitude: lat, longitude: lng } : null;
+};
+const getWorkerName = (w) => w?.name || w?.fullName || w?.displayName || "Worker";
+const readingTime = (r) => r?.timestamp || r?.createdAt || null;
+const formatTime = (v) => {
+  if (!v) return "--";
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? "--" : d.toLocaleString();
+};
+const isRecent = (r, hours = 24) => {
+  const t = readingTime(r);
+  if (!t) return false;
+  const age = Date.now() - new Date(t).getTime();
+  return !Number.isNaN(age) && age <= hours * 3600000;
+};
+const extractSensorValues = (r) => ({
+  reading: r,
+  temperature: pick(r, ["temperature", "temp", "temperatureC"]),
+  moisture: pick(r, ["moisture", "soilMoisture", "soil_moisture"]),
+  humidity: pick(r, ["humidity", "airHumidity"]),
+  ph: pick(r, ["ph", "soilPh", "soil_pH"]),
+  wind: pick(r, ["windSpeed", "wind", "windKmh"]),
+  weather: pick(r, ["weather", "condition", "weatherCondition"]),
+  camera: pick(r, ["camera", "cameraStatus"]),
+  pump: pick(r, ["pump", "pumpStatus"]),
+  position: pick(r, ["position", "currentPosition"]),
+  wildlife: pick(r, ["wildlife", "wildlifeAlert"]),
+});
+const rangeLabel = (key, value) => {
+  const n = Number(value);
+  if (!hasValue(value) || Number.isNaN(n)) return null;
+  const [min, max] = RANGES[key];
+  return n < min ? "Low" : n > max ? "High" : "Optimal";
+};
+const calculateHealth = (values) => {
+  if (!values.reading) return { score: null, status: "No Data", tone: "unknown" };
+  let total = 0, count = 0;
+  Object.keys(RANGES).forEach((key) => {
+    const n = Number(values[key]);
+    if (!hasValue(values[key]) || Number.isNaN(n)) return;
+    const [min, max] = RANGES[key];
+    count += 1;
+    total += n >= min && n <= max ? 100 : Math.max(0, 100 - (n < min ? min - n : n - max) * 10);
   });
+  if (!count) return { score: null, status: "No Data", tone: "unknown" };
+  const score = Math.round(total / count);
+  if (score >= 80) return { score, status: "Healthy", tone: "healthy" };
+  if (score >= 60) return { score, status: "Moderate", tone: "warning" };
+  return { score, status: "Needs Attention", tone: "warning" };
+};
+const statusText = (v, fallback) => (hasValue(v) ? String(v) : fallback);
+const isOnline = (v, fallbackOnline) =>
+  hasValue(v) ? !/off|down|fail|error/i.test(String(v)) : fallbackOnline;
 
-  const [selectedLand, setSelectedLand] = useState(null);
+/* ---------------- SMALL COMPONENTS ---------------- */
+
+const StatCard = ({ tone, icon: Icon, title, value, unit = "", hint, onClick }) => (
+  <div className={`ad-stat ${tone}`} onClick={onClick}>
+    <div className="ad-stat-icon"><Icon size={30} /></div>
+    <div className="ad-stat-text">
+      <span>{title}</span>
+      <strong>{hasValue(value) ? `${value}${unit}` : "--"}</strong>
+      {hint && <small>{hint}</small>}
+    </div>
+    {onClick && <ChevronRight size={16} className="ad-stat-arrow" />}
+  </div>
+);
+
+const StatusItem = ({ icon: Icon, label, online, text }) => (
+  <div className="ad-status-item">
+    <Icon size={26} />
+    <div>
+      <strong>{label}</strong>
+      <span className={online ? "on" : "off"}><i />{text}</span>
+    </div>
+  </div>
+);
+
+const FormRow = ({ label, children }) => (
+  <div className="ad-form-row"><label>{label}</label>{children}</div>
+);
+
+const Field = ({ label, full, children }) => (
+  <div className={`form-field ${full ? "full" : ""}`}>
+    <label>{label}</label>{children}
+  </div>
+);
+
+/* ---------------- MAIN ---------------- */
+
+const ForeignDashboard = () => {
+  const [user] = useState(readStoredUser);
+  const [lands, setLands] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [sensorData, setSensorData] = useState({});
+  const [liveSensor, setLiveSensor] = useState(null);  
+  const [workers, setWorkers] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState(null);
+  const [search, setSearch] = useState("");
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [activeMenu, setActiveMenu] = useState("Dashboard");
 
-  // --------------------------------------------------
-  // LOAD USER + LAND DATA
-  // --------------------------------------------------
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const [task, setTask] = useState({
+    workerId: "", task: TASKS[0], date: "Tomorrow", time: "09:00", crop: "", instructions: "",
+  });
+  const [tasks, setTasks] = useState([]);
+  const [taskBusy, setTaskBusy] = useState(false);
+
+  const userId = user?.uid || user?.id || user?.userId || user?.user?.uid;
+
+  /* ---- Firebase subscriptions (unchanged data logic) ---- */
+
   useEffect(() => {
-    loadDashboardData();
-
-    const handleStorageChange = () => {
-      loadDashboardData();
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  const loadDashboardData = () => {
-    try {
-      const savedLands = JSON.parse(
-        localStorage.getItem("agrisenseLand")
-      );
-
-      if (Array.isArray(savedLands)) {
-        setLands(savedLands);
-      } else {
-        setLands([]);
-      }
-
-      const savedUser = JSON.parse(
-        localStorage.getItem("agrisenseUser")
-      );
-
-      if (savedUser) {
-        setUser((previous) => ({
-          ...previous,
-          ...savedUser,
-        }));
-      }
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
+    if (!userId) {
+      setError("Please log in again to see your fields.");
+      setLoading(false);
+      return undefined;
     }
-  };
+    const unsub = subscribeFields(
+      userId,
+      (list) => { setLands(list); setError(""); setLoading(false); },
+      (e) => { console.error("Field Firebase error:", e); setError("Unable to load your fields from Firebase."); setLoading(false); }
+    );
+    return () => unsub?.();
+  }, [userId]);
 
-  // --------------------------------------------------
-  // TOTAL AREA
-  // --------------------------------------------------
-  const totalArea = lands.reduce((total, land) => {
-    return (
-      total +
-      Number(
-        land.area ??
-          land.acres ??
-          land.landArea ??
-          0
+  const idsKey = lands.map((l) => l.id).join("|");
+
+  useEffect(() => {
+    if (!userId || !idsKey) { setSensorData({}); return undefined; }
+    const unsubs = idsKey.split("|").map((fieldId) =>
+      subscribeSensorReadings(
+        userId, fieldId,
+        (readings) => setSensorData((p) => ({ ...p, [fieldId]: readings })),
+        (e) => console.error(`Sensor error for field ${fieldId}:`, e)
       )
     );
-  }, 0);
+    return () => unsubs.forEach((u) => u?.());
+  }, [userId, idsKey]);
 
-  // --------------------------------------------------
-  // LOCATION FORMATTER
-  // --------------------------------------------------
-  const getLocationText = (land) => {
-    if (!land) {
-      return "Location not available";
-    }
+  useEffect(() => {
+    const unsub = subscribeWorkers(setWorkers, (e) => console.error("Worker Firebase error:", e));
+    return () => unsub?.();
+  }, []);
 
-    const locationParts = [
-      land.city,
-      land.district,
-      land.state,
-      land.province,
-      land.country,
-    ].filter(
-      (item) =>
-        item !== undefined &&
-        item !== null &&
-        String(item).trim() !== ""
+  
+  useEffect(() => {
+    if (!userId) return undefined;
+    const unsub = subscribeOwnerWorkerRequests(userId, setRequests, (e) =>
+      console.error("Worker request Firebase error:", e)
     );
-
-    if (locationParts.length > 0) {
-      // Remove duplicate values
-      return [...new Set(locationParts)].join(", ");
-    }
-
-    if (
-      land.latitude !== undefined &&
-      land.longitude !== undefined
-    ) {
-      return `${land.latitude}, ${land.longitude}`;
-    }
-
-    return "Location not available";
-  };
-
-  // --------------------------------------------------
-  // COORDINATES
-  // --------------------------------------------------
-  const getCoordinates = (land) => {
-    if (
-      land?.latitude !== undefined &&
-      land?.longitude !== undefined &&
-      land.latitude !== "" &&
-      land.longitude !== ""
-    ) {
-      return `${land.latitude}, ${land.longitude}`;
-    }
-
-    return null;
-  };
-
-  // --------------------------------------------------
-  // OPEN LOCATION
-  // --------------------------------------------------
-  const openLocation = (land) => {
-    if (!land) return;
-
-    let query = "";
-
-    if (
-      land.latitude !== undefined &&
-      land.longitude !== undefined &&
-      land.latitude !== "" &&
-      land.longitude !== ""
-    ) {
-      query = `${land.latitude},${land.longitude}`;
-    } else {
-      query = getLocationText(land);
-    }
-
-    if (!query || query === "Location not available") {
-      alert("Location is not available for this land.");
-      return;
-    }
-
-    window.open(
-      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        query
-      )}`,
-      "_blank",
-      "noopener,noreferrer"
+    return () => unsub?.();
+  }, [userId]);
+useEffect(() => {
+    const unsub = subscribeLiveSensors(setLiveSensor, (e) =>
+      console.error("Live sensor error:", e)
     );
+    return () => unsub?.();
+  }, []);
+  
+  useEffect(() => {
+    if (!notice) return undefined;
+    const t = setTimeout(() => setNotice(null), 4500);
+    return () => clearTimeout(t);
+  }, [notice]);
+
+  /* ---- Derived data ---- */
+
+  const selectedLand = lands.find((l) => l.id === selectedId) || lands[0] || null;
+  const latestReading = (id) => (sensorData[id] || [])[0] || liveSensor;
+  const values = extractSensorValues(
+    selectedLand ? latestReading(selectedLand.id) : liveSensor
+  );
+  const health = calculateHealth(values);
+  const live = isRecent(values.reading);
+
+  const totalPlants = Number(pick(selectedLand, ["totalPlants", "plantCount", "plants"])) || null;
+  const healthyPlants = hasValue(selectedLand?.healthyPlants)
+    ? Number(selectedLand.healthyPlants)
+    : totalPlants && health.score !== null
+    ? Math.round((totalPlants * health.score) / 100)
+    : null;
+
+  const liveFields = lands.filter((l) => isRecent(latestReading(l.id))).length;
+  const pendingRequests = requests.filter((r) => r.status === "pending").length;
+
+  const alerts = useMemo(() => {
+    const list = [];
+    if (values.reading) {
+      Object.keys(RANGES).forEach((key) => {
+        const label = rangeLabel(key, values[key]);
+        if (label && label !== "Optimal") {
+          list.push({ icon: AlertTriangle, text: `${LABELS[key]} ${label.toLowerCase()}: ${values[key]}` });
+        }
+      });
+    }
+    if (values.wildlife) {
+      list.push({ icon: PawPrint, text: `Wildlife detected near ${getFieldName(selectedLand)}` });
+    }
+    if (pendingRequests > 0) {
+      list.push({ icon: Users, text: `${pendingRequests} worker request(s) pending` });
+    }
+    return list;
+  }, [values, selectedLand, pendingRequests]);
+
+  const visibleLands = lands.filter((l) =>
+    `${getFieldName(l)} ${getLocationText(l)}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const requestByField = useMemo(() => {
+    const map = {};
+    requests.forEach((r) => { if (!map[r.fieldId] || r.status === "accepted") map[r.fieldId] = r; });
+    return map;
+  }, [requests]);
+  const fieldRequest = selectedLand ? requestByField[selectedLand.id] : null;
+  const assignedWorkerId =
+    selectedLand?.assignedWorkerId || selectedLand?.workerId ||
+    (fieldRequest?.status === "accepted" ? fieldRequest.workerId : "");
+
+  /* ---- Actions ---- */
+
+  const scrollTo = (id) => {
+    if (id === "report") return downloadReport();
+    if (id === "top") return window.scrollTo({ top: 0, behavior: "smooth" });
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // --------------------------------------------------
-  // LOGOUT
-  // --------------------------------------------------
+  const openAddModal = () => { setForm(EMPTY_FORM); setFormError(""); setShowAddModal(true); };
+  const updateForm = (key) => (e) => setForm((p) => ({ ...p, [key]: e.target.value }));
+
+  const handleAddLand = async () => {
+    setFormError("");
+    if (!form.fieldName.trim()) return setFormError("Please enter a field name.");
+    if (!(Number(form.area) > 0)) return setFormError("Please enter the area in acres (greater than 0).");
+    if (!form.country.trim()) return setFormError("Please enter the country where the land is located.");
+    const lat = form.latitude.trim(), lng = form.longitude.trim();
+    if ((lat && !lng) || (!lat && lng)) return setFormError("Enter both latitude and longitude, or leave both empty.");
+    if (lat && (Number.isNaN(Number(lat)) || Math.abs(Number(lat)) > 90)) return setFormError("Latitude must be between -90 and 90.");
+    if (lng && (Number.isNaN(Number(lng)) || Math.abs(Number(lng)) > 180)) return setFormError("Longitude must be between -180 and 180.");
+    setSaving(true);
+    try {
+      const newId = await addField(userId, form);
+      setSelectedId(newId);
+      setShowAddModal(false);
+      setNotice({ type: "success", text: "Field added successfully." });
+    } catch (err) {
+      console.error("Add field error:", err);
+      setFormError(err?.message || "Unable to save the field.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const chosenWorkerId = task.workerId || assignedWorkerId || workers[0]?.id || "";
+  const chosenWorker = workers.find((w) => w.id === chosenWorkerId);
+
+  const callFarmer = () => {
+    const phone = chosenWorker?.phone || chosenWorker?.mobile || chosenWorker?.phoneNumber;
+    if (!phone) return setNotice({ type: "error", text: "This farmer has no phone number saved." });
+    window.location.href = `tel:${phone}`;
+  };
+
+  const assignTask = async () => {
+    if (!selectedLand || !chosenWorkerId) return setNotice({ type: "error", text: "Select a farm and a farmer first." });
+    setTaskBusy(true);
+    try {
+      // Sends a connection request if this farmer is not yet connected to the field.
+      if (assignedWorkerId !== chosenWorkerId) {
+        await sendWorkerConnectionRequest({ ownerId: userId, fieldId: selectedLand.id, workerId: chosenWorkerId });
+      }
+      setTasks((p) => [
+        { id: Date.now(), title: task.task, when: `${task.date} · ${task.time}`, worker: getWorkerName(chosenWorker), status: "Waiting for confirmation" },
+        ...p,
+      ]);
+      setNotice({ type: "success", text: "Task assigned. Waiting for the farmer to confirm." });
+    } catch (err) {
+      console.error("Assign task error:", err);
+      setNotice({ type: "error", text: err?.message || "Unable to assign the task." });
+    } finally {
+      setTaskBusy(false);
+    }
+  };
+
+  const openMap = () => {
+    const c = selectedLand && getCoordinates(selectedLand);
+    if (!selectedLand) return;
+    const q = c ? `${c.latitude},${c.longitude}` : encodeURIComponent(getLocationText(selectedLand));
+    window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, "_blank", "noopener,noreferrer");
+  };
+
+  const downloadReport = () => {
+    const report = {
+      owner: { id: userId, name: user?.name || user?.displayName || "", email: user?.email || "" },
+      generatedAt: new Date().toISOString(),
+      fields: lands.map((land) => {
+        const reading = latestReading(land.id);
+        const v = extractSensorValues(reading);
+        return {
+          fieldId: land.id, fieldName: getFieldName(land), area: getArea(land),
+          cropType: land.cropType || null, location: getLocationText(land),
+          lastReadingAt: readingTime(reading),
+          sensors: { temperature: v.temperature, moisture: v.moisture, humidity: v.humidity, ph: v.ph, wind: v.wind, weather: v.weather },
+          health: calculateHealth(v),
+        };
+      }),
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = "agrisense-field-report.json";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  };
+
   const handleLogout = () => {
-    const confirmLogout = window.confirm(
-      "Are you sure you want to logout?"
-    );
-
-    if (!confirmLogout) return;
-
     localStorage.removeItem("agrisenseUser");
-
+    localStorage.removeItem("agrisenseLand");
     window.location.href = "/login";
   };
 
-  // --------------------------------------------------
-  // REPORT
-  // --------------------------------------------------
-  const downloadReport = () => {
-    const report = {
-      generatedAt: new Date().toISOString(),
-      user: user,
-      totalLands: lands.length,
-      totalArea: totalArea,
-      lands: lands,
-    };
-
-    const blob = new Blob(
-      [JSON.stringify(report, null, 2)],
-      {
-        type: "application/json",
-      }
+  if (loading) {
+    return (
+      <div className="ad-loading"><Loader2 size={30} className="spin" /><p>Loading your fields...</p></div>
     );
+  }
 
-    const url = URL.createObjectURL(blob);
+  const pathText = values.position || null;
+  const sensorsOnline = live;
+  const ownerName = user?.name || user?.displayName || "Foreign Owner";
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "AgriSense-Foreign-Land-Report.json";
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-  };
-
-  // --------------------------------------------------
-  // ADD LAND
-  // --------------------------------------------------
-  const addNewLand = () => {
-    window.location.href = "/foreign-registration";
-  };
+  /* ---------------- RENDER ---------------- */
 
   return (
-    <div className="foreign-dashboard">
-      {/* =================================================
-          SIDEBAR
-      ================================================== */}
-
-      <aside className="foreign-sidebar">
-        {/* BRAND */}
-        <div className="foreign-brand">
-          <div className="foreign-logo">
-            <Sprout size={26} />
-          </div>
-
-          <div>
-            <h2>AgriSense</h2>
-            <p>Smart Farming · Better Tomorrow</p>
-          </div>
-        </div>
-
-        {/* MENU */}
-        <nav className="foreign-menu">
-          <button className="foreign-menu-item active">
-            <Home size={19} />
-            <span>Dashboard</span>
-          </button>
-
-          <button
-            className="foreign-menu-item"
-            onClick={() =>
-              document
-                .getElementById("my-lands")
-                ?.scrollIntoView({
-                  behavior: "smooth",
-                })
-            }
-          >
-            <Map size={19} />
-            <span>My Lands</span>
-          </button>
-
-          <button
-            className="foreign-menu-item"
-            onClick={() =>
-              document
-                .getElementById("sensor-data")
-                ?.scrollIntoView({
-                  behavior: "smooth",
-                })
-            }
-          >
-            <Radio size={19} />
-            <span>Sensor Data</span>
-          </button>
-
-          <button
-            className="foreign-menu-item"
-            onClick={downloadReport}
-          >
-            <FileText size={19} />
-            <span>Reports</span>
-          </button>
-
-          <button className="foreign-menu-item">
-            <BarChart3 size={19} />
-            <span>Market Insights</span>
-          </button>
-
-          <button className="foreign-menu-item">
-            <MessageSquare size={19} />
-            <span>Messages</span>
-          </button>
-
-          <button className="foreign-menu-item">
-            <Settings size={19} />
-            <span>Settings</span>
-          </button>
+    <div className="ad-root" id="top">
+      {/* SIDEBAR */}
+      <aside className="ad-sidebar">
+        <div className="ad-brand"><Sprout size={34} /><h2>AgriSense</h2></div>
+        <nav className="ad-menu">
+          {MENU.map(([label, Icon, target]) => (
+            <button
+              key={label}
+              className={`ad-menu-item ${activeMenu === label ? "active" : ""}`}
+              onClick={() => { setActiveMenu(label); scrollTo(target); }}
+            >
+              <Icon size={19} />
+              <span>{label}</span>
+              {label === "Notifications" && alerts.length > 0 && <b className="ad-dot">{alerts.length}</b>}
+            </button>
+          ))}
         </nav>
-
-        {/* LOGOUT */}
-        <button
-          className="foreign-logout"
-          onClick={handleLogout}
-        >
-          <LogOut size={19} />
-          <span>Logout</span>
-        </button>
+        <div className="ad-divider" />
+        <button className="ad-menu-item"><Settings size={19} /><span>Settings</span></button>
+        <div className="ad-divider" />
+        <button className="ad-menu-item ad-logout" onClick={handleLogout}><LogOut size={19} /><span>Logout</span></button>
       </aside>
 
-      {/* =================================================
-          MAIN CONTENT
-      ================================================== */}
-
-      <main className="foreign-main">
-        {/* HEADER */}
-        <header className="foreign-header">
-          <div>
-            <h1>Foreign Dashboard</h1>
-
-            <p>
-              Monitor your agricultural land from
-              anywhere in the world.
-            </p>
-          </div>
-
-          <div className="foreign-header-right">
-            {/* NOTIFICATION */}
-            <button className="foreign-notification">
-              <Bell size={20} />
-              <span>1</span>
+      <div className="ad-body">
+        {/* TOP BAR */}
+        <header className="ad-topbar">
+          <label className="ad-search">
+            <Search size={16} />
+            <input placeholder="Search fields..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </label>
+          <button className="ad-bell" title="Alerts" onClick={() => scrollTo("alerts")}>
+            <Bell size={20} />
+            {alerts.length > 0 && <b className="ad-dot">{alerts.length}</b>}
+          </button>
+          <div className="ad-profile-wrap">
+            <button className="ad-profile" onClick={() => setShowProfileMenu((o) => !o)}>
+              <span className="ad-avatar"><User size={18} /></span>
+              <strong>{ownerName}</strong>
+              <ChevronDown size={14} />
             </button>
-
-            {/* PROFILE */}
-            <div className="foreign-profile-wrapper">
-              <button
-                className="foreign-profile"
-                onClick={() =>
-                  setShowProfileMenu(
-                    !showProfileMenu
-                  )
-                }
-              >
-                <div className="foreign-avatar">
-                  <Globe2 size={18} />
-                </div>
-
-                <div className="foreign-profile-info">
-                  <strong>
-                    {user.name ||
-                      "Foreign Rented"}
-                  </strong>
-
-                  <small>
-                    {user.role ||
-                      "Foreign User"}
-                  </small>
-                </div>
-
-                <ChevronDown size={15} />
-              </button>
-
-              {showProfileMenu && (
-                <div className="foreign-profile-menu">
-                  <div>
-                    <strong>
-                      {user.name ||
-                        "Foreign Rented"}
-                    </strong>
-
-                    <span>
-                      {user.email || "Foreign User"}
-                    </span>
-                  </div>
-
-                  <button>
-                    <Settings size={16} />
-                    Account Settings
-                  </button>
-
-                  <button onClick={handleLogout}>
-                    <LogOut size={16} />
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <Globe2
-              size={21}
-              className="header-globe"
-            />
+            {showProfileMenu && (
+              <div className="ad-profile-menu">
+                <div><strong>{ownerName}</strong><span>{user?.email || "No email"}</span></div>
+                <button onClick={handleLogout}><LogOut size={15} /> Logout</button>
+              </div>
+            )}
           </div>
+          <button className="ad-gear"><Settings size={22} /></button>
         </header>
 
-        {/* =================================================
-            STAT CARDS
-        ================================================== */}
+        {notice && (
+          <div className={`ad-notice ${notice.type}`}>{notice.text}</div>
+        )}
+        {error && (
+          <div className="ad-notice error"><AlertCircle size={16} /> {error}</div>
+        )}
 
-        <section className="foreign-stats">
-          {/* MY LANDS */}
-          <div className="foreign-stat-card green">
-            <div className="foreign-stat-icon">
-              <MapPin size={22} />
-            </div>
-
-            <div>
-              <span>My Lands</span>
-
-              <strong>{lands.length}</strong>
-
-              <small>Registered Lands</small>
-            </div>
-          </div>
-
-          {/* TOTAL AREA */}
-          <div className="foreign-stat-card blue">
-            <div className="foreign-stat-icon">
-              <Map size={22} />
-            </div>
-
-            <div>
-              <span>Total Area</span>
-
-              <strong>
-                {totalArea.toFixed(1)} Acres
-              </strong>
-
-              <small>
-                Across {lands.length} Locations
-              </small>
-            </div>
-          </div>
-
-          {/* ACTIVE FIELDS */}
-          <div className="foreign-stat-card purple">
-            <div className="foreign-stat-icon">
-              <Sprout size={22} />
-            </div>
-
-            <div>
-              <span>Active Fields</span>
-
-              <strong>{lands.length}</strong>
-
-              <small>
-                Currently Monitoring
-              </small>
-            </div>
-          </div>
-
-          {/* STATUS */}
-          <div className="foreign-stat-card orange">
-            <div className="foreign-stat-icon">
-              <Activity size={22} />
-            </div>
-
-            <div>
-              <span>System Status</span>
-
-              <strong>Online</strong>
-
-              <small>
-                Sensors Connected
-              </small>
-            </div>
-          </div>
-        </section>
-
-        {/* =================================================
-            LAND + SENSOR SECTION
-        ================================================== */}
-
-        <section className="foreign-main-row">
-          {/* =================================================
-              LAND OVERVIEW
-          ================================================== */}
-
-          <div
-            className="foreign-panel land-overview"
-            id="my-lands"
-          >
-            <div className="foreign-panel-header">
-              <div>
-                <h2>Land Overview</h2>
-
+        <div className="ad-grid">
+          {/* LEFT COLUMN */}
+          <div className="ad-col">
+            {/* WELCOME */}
+            <section className="ad-welcome" id="lands">
+              <Sprout size={64} className="ad-welcome-leaf" />
+              <div className="ad-welcome-text">
+                <h1>Welcome back! 👋</h1>
                 <p>
-                  Your registered agricultural
-                  locations
+                  {live
+                    ? "Your farm is being monitored automatically."
+                    : lands.length
+                    ? "Waiting for the latest sensor reading."
+                    : "Add your first field to start monitoring."}
                 </p>
               </div>
+              <div className="ad-welcome-actions">
+                {lands.length > 0 && (
+                  <select
+                    value={selectedLand?.id || ""}
+                    onChange={(e) => setSelectedId(e.target.value)}
+                    aria-label="Select field"
+                  >
+                    {visibleLands.map((l) => (
+                      <option key={l.id} value={l.id}>{getFieldName(l)}</option>
+                    ))}
+                  </select>
+                )}
+                <button className="ad-btn primary" onClick={openAddModal}><Plus size={15} /> Add Land</button>
+              </div>
+            </section>
 
-              <div className="land-header-actions">
-                <span className="land-count">
-                  {lands.length}{" "}
-                  {lands.length === 1
-                    ? "Land"
-                    : "Lands"}
-                </span>
+            {/* STAT CARDS */}
+            <section className="ad-stats" id="sensors">
+              <StatCard tone="blue" icon={Cpu} title="Machine" value={live ? "ACTIVE" : "IDLE"} onClick={() => scrollTo("machine")} />
+              <StatCard
+                tone="green" icon={Sprout} title="Plants"
+                value={totalPlants ? `${healthyPlants ?? "--"}/${totalPlants}` : "--"}
+              />
+              <StatCard
+                tone="green" icon={HeartPulse} title="Healthy"
+                value={healthyPlants ?? (health.score !== null ? `${health.score}%` : null)}
+                hint={health.score !== null && !healthyPlants ? health.status : undefined}
+              />
+              <StatCard tone="blue" icon={Droplet} title="Moisture" value={values.moisture} unit="%" hint={rangeLabel("moisture", values.moisture)} />
+              <StatCard tone="purple" icon={CloudRain} title="Humidity" value={values.humidity} unit="%" hint={rangeLabel("humidity", values.humidity)} />
+              <StatCard tone="orange" icon={Thermometer} title="Temp" value={values.temperature} unit="°C" hint={rangeLabel("temperature", values.temperature)} />
+            </section>
 
-                <button
-                  className="add-land-btn"
-                  onClick={addNewLand}
-                >
-                  <Plus size={16} />
-                  Add Land
+            {/* MACHINE MONITORING */}
+            <section className="ad-panel" id="machine">
+              <h2 className="ad-title"><Cpu size={22} /> MACHINE MONITORING</h2>
+              <div className="ad-path">
+                {pathText ? (
+                  String(pathText).split(/→|->/).map((p, i, arr) => (
+                    <React.Fragment key={i}><b>{p.trim()}</b>{i < arr.length - 1 && <span>→</span>}</React.Fragment>
+                  ))
+                ) : (
+                  <b>{selectedLand ? getFieldName(selectedLand) : "No field selected"}</b>
+                )}
+              </div>
+              <div className="ad-progress-row">
+                <div className="health-bar"><div className={`health-bar-fill ${health.tone}`} style={{ width: `${health.score ?? 0}%` }} /></div>
+                <strong>{health.score !== null ? `${health.score}%` : "--"}</strong>
+              </div>
+              <div className="ad-status-row">
+                <StatusItem icon={Camera} label="Camera" online={isOnline(values.camera, live)} text={statusText(values.camera, live ? "Online" : "Offline")} />
+                <StatusItem icon={Radio} label="Sensors" online={sensorsOnline} text={sensorsOnline ? "Online" : "Offline"} />
+                <StatusItem icon={Waves} label="Pump" online={isOnline(values.pump, live)} text={statusText(values.pump, live ? "Online" : "Offline")} />
+              </div>
+              <p className="ad-muted"><Clock size={12} /> Last updated {formatTime(readingTime(values.reading))} · {liveFields}/{lands.length} fields live</p>
+            </section>
+
+            {/* ALERTS + WILDLIFE */}
+            <div className="ad-two" id="alerts">
+              <section className="ad-panel danger">
+                <h2 className="ad-title red"><AlertTriangle size={24} /> ALERTS</h2>
+                {alerts.length === 0 ? (
+                  <p className="ad-empty"><CheckCircle size={18} /> No alerts. Readings are within range.</p>
+                ) : (
+                  alerts.map((a, i) => (
+                    <div className="ad-alert" key={i}>
+                      <span className="ad-alert-icon"><a.icon size={18} /></span>
+                      <span>{a.text}</span>
+                      <ChevronRight size={15} />
+                    </div>
+                  ))
+                )}
+              </section>
+
+              <section className="ad-panel danger">
+                <h2 className="ad-title red"><PawPrint size={22} /> Wildlife</h2>
+                {values.wildlife ? (
+                  <>
+                    <p className="ad-wild-text">
+                      <strong>Wildlife Detected</strong>
+                      {typeof values.wildlife === "string" ? values.wildlife : values.wildlife?.label || "Animal entered the farm"}
+                    </p>
+                    {(values.wildlife?.imageUrl || selectedLand?.wildlifeImage) && (
+                      <img className="ad-wild-img" src={values.wildlife?.imageUrl || selectedLand.wildlifeImage} alt="Wildlife detected" />
+                    )}
+                    <div className="ad-wild-meta"><span>{formatTime(readingTime(values.reading))}</span><span>{selectedLand ? getFieldName(selectedLand) : ""}</span></div>
+                  </>
+                ) : (
+                  <p className="ad-empty"><PawPrint size={18} /> No wildlife detected recently.</p>
+                )}
+              </section>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="ad-col">
+            <section className="ad-camera">
+              {(selectedLand?.cameraUrl || "/imageag.avif") && (
+                <img src={selectedLand?.cameraUrl || "/imageag.avif"} alt="Field camera" />
+              )}
+              <span className={`ad-live ${live ? "" : "off"}`}>● {live ? "LIVE" : "OFFLINE"}</span>
+              <span className="ad-cam-name">{selectedLand ? getFieldName(selectedLand) : "No field"} · Camera 1</span>
+            </section>
+
+            <section className="ad-panel" id="tasks">
+              <h2 className="ad-title"><Users size={22} /> Farmer &amp; Tasks</h2>
+              <div className="ad-call-head"><Phone size={18} /> CALL / ASSIGN FARMER</div>
+
+              <FormRow label="Farmer">
+                <select value={chosenWorkerId} onChange={(e) => setTask((p) => ({ ...p, workerId: e.target.value }))}>
+                  {workers.length === 0 && <option value="">No workers available</option>}
+                  {workers.map((w) => <option key={w.id} value={w.id}>{getWorkerName(w)}</option>)}
+                </select>
+              </FormRow>
+              <FormRow label="Farm">
+                <select value={selectedLand?.id || ""} onChange={(e) => setSelectedId(e.target.value)}>
+                  {lands.length === 0 && <option value="">No fields yet</option>}
+                  {lands.map((l) => <option key={l.id} value={l.id}>{getFieldName(l)}</option>)}
+                </select>
+              </FormRow>
+              <FormRow label="Task">
+                <select value={task.task} onChange={(e) => setTask((p) => ({ ...p, task: e.target.value }))}>
+                  {TASKS.map((t) => <option key={t}>{t}</option>)}
+                </select>
+              </FormRow>
+              <FormRow label="Date">
+                <div className="ad-icon-input"><Calendar size={15} />
+                  <input value={task.date} onChange={(e) => setTask((p) => ({ ...p, date: e.target.value }))} />
+                </div>
+              </FormRow>
+              <FormRow label="Time">
+                <div className="ad-icon-input"><Clock size={15} />
+                  <input type="time" value={task.time} onChange={(e) => setTask((p) => ({ ...p, time: e.target.value }))} />
+                </div>
+              </FormRow>
+              <FormRow label="Crop">
+                <input value={task.crop || selectedLand?.cropType || ""} onChange={(e) => setTask((p) => ({ ...p, crop: e.target.value }))} placeholder="e.g. Tomato" />
+              </FormRow>
+              <FormRow label="Instructions">
+                <textarea rows={3} value={task.instructions} onChange={(e) => setTask((p) => ({ ...p, instructions: e.target.value }))} placeholder="e.g. Apply to rows 5–10" />
+              </FormRow>
+
+              <div className="ad-btn-row">
+                <button className="ad-btn primary" onClick={callFarmer}><Phone size={16} /> Call Farmer</button>
+                <button className="ad-btn teal" onClick={assignTask} disabled={taskBusy}>
+                  {taskBusy ? <Loader2 size={16} className="spin" /> : <Send size={16} />} Assign Task
                 </button>
               </div>
-            </div>
+            </section>
 
-            {/* LAND LIST */}
-            <div className="land-list">
-              {lands.length === 0 ? (
-                <div className="no-land">
-                  <div className="no-land-icon">
-                    <Sprout size={38} />
-                  </div>
-
-                  <h3>
-                    No Land Registered
-                  </h3>
-
-                  <p>
-                    Register your agricultural
-                    land to monitor it from
-                    anywhere in the world.
-                  </p>
-
-                  <button
-                    onClick={addNewLand}
-                    className="register-land-button"
-                  >
-                    <Plus size={17} />
-                    Register Land
-                  </button>
-                </div>
+            <section className="ad-panel">
+              <h2 className="ad-title"><FileText size={22} /> UPCOMING TASKS</h2>
+              {tasks.length === 0 ? (
+                <p className="ad-empty"><Clock size={18} /> No tasks yet. Assign one above.</p>
               ) : (
-                lands.map((land, index) => {
-                  const area = Number(
-                    land.area ??
-                      land.acres ??
-                      land.landArea ??
-                      0
-                  );
-
-                  const location =
-                    getLocationText(land);
-
-                  const coordinates =
-                    getCoordinates(land);
-
-                  return (
-                    <div
-                      className="land-list-item"
-                      key={
-                        land.id || index
-                      }
-                    >
-                      {/* ICON */}
-                      <div className="land-list-icon">
-                        <Sprout size={20} />
-                      </div>
-
-                      {/* DETAILS */}
-                      <div className="land-list-info">
-                        <strong>
-                          {land.landName ||
-                            land.name ||
-                            `Agricultural Land ${
-                              index + 1
-                            }`}
-                        </strong>
-
-                        <div className="land-location">
-                          <MapPin size={14} />
-
-                          <span>
-                            {location}
-                          </span>
-                        </div>
-
-                        <div className="land-meta">
-                          <span>
-                            {area.toFixed(1)}{" "}
-                            Acres
-                          </span>
-
-                          {coordinates && (
-                            <span>
-                              📍{" "}
-                              {coordinates}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* RIGHT */}
-                      <div className="land-list-right">
-                        <span className="healthy-badge">
-                          <span>●</span>
-                          Healthy
-                        </span>
-
-                        <button
-                          className="land-view-button"
-                          onClick={() => {
-                            setSelectedLand(
-                              land
-                            );
-                          }}
-                          title="View land details"
-                        >
-                          View
-                        </button>
-
-                        <button
-                          className="land-map-button"
-                          onClick={() =>
-                            openLocation(land)
-                          }
-                          title="Open registered location"
-                        >
-                          <MapPin size={17} />
-                        </button>
-                      </div>
+                <>
+                  {tasks.map((t) => (
+                    <div className="ad-task" key={t.id}>
+                      <Leaf size={20} />
+                      <div><strong>{t.title}</strong><small>{t.worker}</small></div>
+                      <span>{t.when}</span>
                     </div>
-                  );
-                })
+                  ))}
+                  <div className="ad-task-status"><Clock size={18} /> Status: {tasks[0].status}</div>
+                </>
               )}
-            </div>
+            </section>
           </div>
+        </div>
+      </div>
 
-          {/* =================================================
-              SENSOR DATA
-          ================================================== */}
-
-          <div
-            className="foreign-panel sensor-panel"
-            id="sensor-data"
-          >
-            <div className="foreign-panel-header">
-              <div>
-                <h2>Live Sensor Data</h2>
-
-                <p>
-                  Latest available field
-                  readings
-                </p>
-              </div>
-
-              <span className="sensor-live">
-                <span></span>
-                Live
-              </span>
-            </div>
-
-            <div className="sensor-grid">
-              {/* TEMPERATURE */}
-              <div className="sensor-card">
-                <div className="sensor-icon temperature">
-                  <Thermometer size={20} />
-                </div>
-
-                <span>Temperature</span>
-
-                <strong>28.4 °C</strong>
-
-                <small>
-                  Normal range
-                </small>
-              </div>
-
-              {/* MOISTURE */}
-              <div className="sensor-card">
-                <div className="sensor-icon moisture">
-                  <Droplets size={20} />
-                </div>
-
-                <span>Soil Moisture</span>
-
-                <strong>62%</strong>
-
-                <small>
-                  Good moisture
-                </small>
-              </div>
-
-              {/* HUMIDITY */}
-              <div className="sensor-card">
-                <div className="sensor-icon humidity">
-                  <Wind size={20} />
-                </div>
-
-                <span>Humidity</span>
-
-                <strong>71%</strong>
-
-                <small>
-                  Suitable
-                </small>
-              </div>
-
-              {/* PH */}
-              <div className="sensor-card">
-                <div className="sensor-icon ph">
-                  <FlaskConical size={20} />
-                </div>
-
-                <span>Soil pH</span>
-
-                <strong>6.7</strong>
-
-                <small>
-                  Optimal
-                </small>
-              </div>
-            </div>
-
-            {/* SENSOR FOOTER */}
-            <div className="sensor-footer">
-              <Activity size={16} />
-
-              <span>
-                Last updated a few seconds ago
-              </span>
-            </div>
-          </div>
-
-          {/* =================================================
-              QUICK ACTIONS
-          ================================================== */}
-
-          <div className="foreign-panel quick-panel">
-            <div className="foreign-panel-header">
-              <div>
-                <h2>Quick Actions</h2>
-
-                <p>
-                  Manage your farm quickly
-                </p>
-              </div>
-            </div>
-
-            <div className="foreign-actions">
-              <button onClick={addNewLand}>
-                <div className="action-icon">
-                  <Plus size={17} />
-                </div>
-
-                <span>Register New Land</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  document
-                    .getElementById(
-                      "my-lands"
-                    )
-                    ?.scrollIntoView({
-                      behavior: "smooth",
-                    });
-                }}
-              >
-                <div className="action-icon">
-                  <Map size={17} />
-                </div>
-
-                <span>View Land Details</span>
-              </button>
-
-              <button
-                onClick={downloadReport}
-              >
-                <div className="action-icon">
-                  <Download size={17} />
-                </div>
-
-                <span>
-                  Download Report
-                </span>
-              </button>
-
-              <button>
-                <div className="action-icon">
-                  <AlertTriangle
-                    size={17}
-                  />
-                </div>
-
-                <span>Check Alerts</span>
-              </button>
-
-              <button>
-                <div className="action-icon">
-                  <Headphones size={17} />
-                </div>
-
-                <span>
-                  Contact Support
-                </span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* =================================================
-            WEATHER / FARM STATUS
-        ================================================== */}
-
-        <section className="foreign-bottom-grid">
-          {/* WEATHER */}
-          <div className="foreign-panel weather-panel">
-            <div className="foreign-panel-header">
-              <div>
-                <h2>Farm Weather</h2>
-
-                <p>
-                  Current conditions
-                </p>
-              </div>
-
-              <CloudSun size={28} />
-            </div>
-
-            <div className="weather-content">
-              <div className="weather-temperature">
-                <strong>28°</strong>
-
-                <span>Clear</span>
-              </div>
-
-              <div className="weather-details">
-                <div>
-                  <Droplets size={17} />
-                  <span>Humidity</span>
-                  <strong>71%</strong>
-                </div>
-
-                <div>
-                  <Wind size={17} />
-                  <span>Wind</span>
-                  <strong>12 km/h</strong>
-                </div>
-
-                <div>
-                  <Thermometer size={17} />
-                  <span>Feels Like</span>
-                  <strong>29°</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* FARM HEALTH */}
-          <div className="foreign-panel farm-health-panel">
-            <div className="foreign-panel-header">
-              <div>
-                <h2>Farm Health</h2>
-
-                <p>
-                  Overall field condition
-                </p>
-              </div>
-
-              <Leaf size={27} />
-            </div>
-
-            <div className="health-content">
-              <div className="health-score">
-                <strong>92%</strong>
-                <span>Healthy</span>
-              </div>
-
-              <div className="health-progress">
-                <div className="health-progress-bar">
-                  <span
-                    style={{
-                      width: "92%",
-                    }}
-                  ></span>
-                </div>
-
-                <p>
-                  Your fields are currently
-                  showing healthy conditions.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* =================================================
-            GLOBAL BANNER
-        ================================================== */}
-
-        <section className="foreign-banner">
-          <div className="banner-content">
-            <div className="banner-icon">
-              <Globe2 size={30} />
-            </div>
-
-            <div>
-              <h2>
-                Agriculture connects people
-                across borders
-              </h2>
-
-              <p>
-                Smarter decisions. Better
-                harvests. A sustainable future.
-              </p>
-            </div>
-          </div>
-
-          <div className="banner-brand">
-            <Sprout size={22} />
-            <span>AgriSense</span>
-          </div>
-        </section>
-      </main>
-
-      {/* =================================================
-          LAND DETAILS MODAL
-      ================================================== */}
-
-      {selectedLand && (
-        <div
-          className="land-modal-overlay"
-          onClick={() =>
-            setSelectedLand(null)
-          }
-        >
-          <div
-            className="land-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
+      {/* ADD LAND MODAL */}
+      {showAddModal && (
+        <div className="land-modal-overlay" onClick={() => !saving && setShowAddModal(false)}>
+          <div className="land-modal land-form-modal" onClick={(e) => e.stopPropagation()}>
             <div className="land-modal-header">
-              <div>
-                <h2>
-                  {selectedLand.landName ||
-                    selectedLand.name ||
-                    "Agricultural Land"}
-                </h2>
-
-                <p>
-                  Registered land information
-                </p>
-              </div>
-
-              <button
-                onClick={() =>
-                  setSelectedLand(null)
-                }
-              >
-                <X size={20} />
-              </button>
+              <div><h2>Add Land</h2><p>Register a field you own so you can monitor it remotely</p></div>
+              <button disabled={saving} onClick={() => setShowAddModal(false)}><X size={18} /></button>
             </div>
-
-            <div className="land-modal-body">
-              <div className="detail-box">
-                <MapPin size={19} />
-
-                <div>
-                  <span>Location</span>
-
-                  <strong>
-                    {getLocationText(
-                      selectedLand
-                    )}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="detail-box">
-                <Map size={19} />
-
-                <div>
-                  <span>Area</span>
-
-                  <strong>
-                    {Number(
-                      selectedLand.area ??
-                        selectedLand.acres ??
-                        selectedLand.landArea ??
-                        0
-                    ).toFixed(1)}{" "}
-                    Acres
-                  </strong>
-                </div>
-              </div>
-
-              {getCoordinates(
-                selectedLand
-              ) && (
-                <div className="detail-box">
-                  <Globe2 size={19} />
-
-                  <div>
-                    <span>Coordinates</span>
-
-                    <strong>
-                      {getCoordinates(
-                        selectedLand
-                      )}
-                    </strong>
-                  </div>
-                </div>
-              )}
-
-              <div className="detail-box">
-                <Activity size={19} />
-
-                <div>
-                  <span>Status</span>
-
-                  <strong className="healthy-text">
-                    Healthy
-                  </strong>
-                </div>
-              </div>
+            <div className="land-form">
+              <Field label="Field name *"><input value={form.fieldName} onChange={updateForm("fieldName")} placeholder="e.g. North paddy field" /></Field>
+              <Field label="Area (acres) *"><input type="number" min="0" step="any" value={form.area} onChange={updateForm("area")} placeholder="e.g. 2.5" /></Field>
+              <Field label="Crop"><input value={form.cropType} onChange={updateForm("cropType")} placeholder="e.g. Rice, coconut" /></Field>
+              <Field label="Soil type">
+                <select value={form.soilType} onChange={updateForm("soilType")}>
+                  <option value="">Select soil type</option>
+                  {SOIL_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </Field>
+              <div className="form-section-title">Where is the land?</div>
+              <Field label="Country *"><input value={form.country} onChange={updateForm("country")} placeholder="Country of the land" /></Field>
+              <Field label="State / Province"><input value={form.state} onChange={updateForm("state")} /></Field>
+              <Field label="District"><input value={form.district} onChange={updateForm("district")} /></Field>
+              <Field label="City / Village"><input value={form.city} onChange={updateForm("city")} /></Field>
+              <Field label="Address / landmark" full><input value={form.address} onChange={updateForm("address")} placeholder="Survey number, road, nearby landmark" /></Field>
+              <Field label="Latitude"><input value={form.latitude} onChange={updateForm("latitude")} placeholder="e.g. 10.5276" /></Field>
+              <Field label="Longitude"><input value={form.longitude} onChange={updateForm("longitude")} placeholder="e.g. 76.2144" /></Field>
+              <Field label="Sensor device ID (optional)" full><input value={form.sensorDeviceId} onChange={updateForm("sensorDeviceId")} placeholder="ID printed on the field's sensor kit" /></Field>
+              {formError && <div className="form-error"><AlertCircle size={14} />{formError}</div>}
             </div>
-
             <div className="land-modal-footer">
-              <button
-                className="modal-close-btn"
-                onClick={() =>
-                  setSelectedLand(null)
-                }
-              >
-                Close
-              </button>
-
-              <button
-                className="modal-map-btn"
-                onClick={() =>
-                  openLocation(
-                    selectedLand
-                  )
-                }
-              >
-                <MapPin size={17} />
-                View Location
+              <button className="modal-close-btn" disabled={saving} onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button className="modal-connect-btn" disabled={saving} onClick={handleAddLand}>
+                {saving ? <><Loader2 size={14} className="spin" /> Saving...</> : <><Plus size={14} /> Save Field</>}
               </button>
             </div>
           </div>
